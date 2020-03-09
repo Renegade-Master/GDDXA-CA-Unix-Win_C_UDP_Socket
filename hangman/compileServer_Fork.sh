@@ -9,7 +9,7 @@ if ! [ -e bin/ ]; then
 fi
 
 # Clear the existing binary files
-if [ -e bin/hangmanServer ]; then
+if [ -e bin/hangmanServer_Fork ]; then
   rm bin/hangmanServer_Fork
 fi
 
