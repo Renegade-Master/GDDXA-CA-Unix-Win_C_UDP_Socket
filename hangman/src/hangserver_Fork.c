@@ -41,11 +41,21 @@ int main() {
 
     while (1) {
         client_len = sizeof(client);
-	//Accept Connection "FORK HERE!!"
+	    //Accept Connection "FORK HERE!!"
         if ((fd    = accept(sock, (struct sockaddr*) &client, &client_len)) < 0) {
             perror("accepting connection");
-            exit(3);
+            //exit(3);
         }
+        int pid = fork();
+        
+        if(pid==0){
+            perror("Fork Connection Accepted");
+            
+        }
+        else{
+            close(fd);
+        }
+        
         //play_hangman(fd, fd);
         close(fd);
     }
