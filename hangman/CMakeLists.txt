@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.14)
 project(hangman C)
 
-set(CMAKE_GNU_STANDARD 99)
+set(CMAKE_C_STANDARD 99)
 
 include_directories(.)
 
