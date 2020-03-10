@@ -10,6 +10,9 @@
 #include <string.h>
 #include <unistd.h>
 
+# define LINESIZE 80
+# define HANGMAN_TCP_PORT 1066
+
 int main(int argc, char* argv[]);
 
 #endif // HANGCLIENT_H

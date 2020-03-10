@@ -2,9 +2,6 @@
 
 #include "../hdr/hangclient.h"
 
-# define LINESIZE 80
-# define HANGMAN_TCP_PORT 1066
-
 int main(int argc, char* argv[]) {
     struct sockaddr_in server; // Server's address assembled here
     struct hostent     * host_info;
