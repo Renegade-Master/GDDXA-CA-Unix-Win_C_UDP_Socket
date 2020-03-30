@@ -7,4 +7,6 @@
 
 #include "hangserver.h"
 
+#define HANGMAN_UDP_PORT 1337
+
 #endif //HANGMAN_HANGSERVER_UDP_H

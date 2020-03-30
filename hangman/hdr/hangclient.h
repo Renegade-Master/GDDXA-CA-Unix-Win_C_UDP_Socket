@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 # define LINESIZE 80
-# define HANGMAN_TCP_PORT 1066
+//# define HANGMAN_TCP_PORT 1066 // Define this in the Specific Header
 
 int main(int argc, char* argv[]);
 
