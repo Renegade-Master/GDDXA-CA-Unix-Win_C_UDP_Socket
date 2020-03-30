@@ -21,9 +21,9 @@ set(TCP_SELECT_SERVER_SOURCE_FILES
 
 # Source files for the UDP Application
 set(UDP_CLIENT_SOURCE_FILES
-        src/hangclient.c)
+        src/hangclient_udp.c)
 set(UDP_SERVER_SOURCE_FILES
-        src/hangserver.c)
+        src/hangserver_udp.c)
 
 # Build instructions for the TCP Fork Application
 add_executable(hangman_tcp_fork_client ${TCP_FORK_CLIENT_SOURCE_FILES})

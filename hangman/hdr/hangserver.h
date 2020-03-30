@@ -13,6 +13,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern time_t time();
+
+char* word[] = {
+#include "../rsc/words"
+};
+
+# define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
+# define MAXLEN 80 // Maximum size in the word of any String
+# define HANGMAN_TCP_PORT 1066
+
 void play_hangman(int in, int out);
 
 #endif // HANGSERVER_H
