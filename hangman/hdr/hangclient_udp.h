@@ -14,7 +14,8 @@
 
 #define HANGMAN_UDP_PORT 1337
 
-void play_hangman(int sock, const struct sockaddr *serv_addr, socklen_t serv_len);
-void test_connection(int sock, const struct sockaddr *serv_addr, socklen_t serv_len);
+void play_hangman(int sock, const struct sockaddr* serv_addr, socklen_t serv_len);
+
+void test_connection(int sock, const struct sockaddr* serv_addr, socklen_t serv_len);
 
 #endif //HANGMAN_HANGSERVER_UDP_H

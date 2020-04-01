@@ -18,7 +18,7 @@
  * @param cli_addr  - The address of the remote Client
  * @param cli_len   - The length of the Client Address Structure
  */
-void play_hangman(int sock, struct sockaddr *cli_addr, socklen_t cli_len) {
+void play_hangman(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
     fprintf(stdout, "Playing Hangman\n");
 }
 
@@ -30,8 +30,8 @@ void play_hangman(int sock, struct sockaddr *cli_addr, socklen_t cli_len) {
  * @param cli_addr  - The address of the remote Client
  * @param cli_len   - The length of the Client Address Structure
  */
-void test_connection(int sock, struct sockaddr *cli_addr, socklen_t cli_len) {
-    int count;
+void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
+    int  count;
     char i_line[MAXLEN];
 
     fprintf(stdout, "Testing Connection\n");
@@ -66,7 +66,7 @@ void test_connection(int sock, struct sockaddr *cli_addr, socklen_t cli_len) {
         // Print confirmation of the send to the screen
         fprintf(stdout, "Messg Sent: %s", i_line);
         fprintf(stdout, "Bytes sent: %d\n\n", count);
-    } while(strcmp(i_line, "#quit") != 0); // ToDo: Create stop condition that actually works
+    } while (strcmp(i_line, "#quit") != 0); // ToDo: Create stop condition that actually works
 }
 
 

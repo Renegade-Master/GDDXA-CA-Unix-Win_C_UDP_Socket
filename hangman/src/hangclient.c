@@ -4,11 +4,11 @@
 
 int main(int argc, char* argv[]) {
     struct sockaddr_in server; // Server's address assembled here
-    struct hostent     * host_info;
-    int                sock, count;
-    char               i_line[LINESIZE];
-    char               o_line[LINESIZE];
-    char               * server_name;
+    struct hostent* host_info;
+    int  sock, count;
+    char i_line[LINESIZE];
+    char o_line[LINESIZE];
+    char* server_name;
 
     // Get server name from the command line.  If none, use 'localhost'
     server_name = (argc == 1) ? argv[1] : "localhost";

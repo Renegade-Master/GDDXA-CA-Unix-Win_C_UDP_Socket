@@ -18,7 +18,7 @@
  * @param cli_addr  - The address of the remote Server
  * @param cli_len   - The length of the Server Address Structure
  */
-void play_hangman(int sock, const struct sockaddr *serv_addr, socklen_t serv_len) {
+void play_hangman(int sock, const struct sockaddr* serv_addr, socklen_t serv_len) {
     fprintf(stdout, "Playing Hangman\n");
 }
 
@@ -30,8 +30,8 @@ void play_hangman(int sock, const struct sockaddr *serv_addr, socklen_t serv_len
  * @param cli_addr  - The address of the remote Server
  * @param cli_len   - The length of the Server Address Structure
  */
-void test_connection(int sock, const struct sockaddr *serv_addr, socklen_t serv_len) {
-    int count;
+void test_connection(int sock, const struct sockaddr* serv_addr, socklen_t serv_len) {
+    int  count;
     char i_line[LINESIZE + 1];
     char o_line[LINESIZE];
     bzero(&i_line, sizeof(i_line));
@@ -40,7 +40,7 @@ void test_connection(int sock, const struct sockaddr *serv_addr, socklen_t serv_
     fprintf(stdout, "Testing Connection\n");
 
     fprintf(stdout, ">>");
-    while(fgets(o_line, LINESIZE, stdin) != NULL) {
+    while (fgets(o_line, LINESIZE, stdin) != NULL) {
         fprintf(stdout, "Sending: %s\n", o_line);
 
         sendto(sock, o_line, strlen(o_line), 0, serv_addr, serv_len);
@@ -69,8 +69,8 @@ void test_connection(int sock, const struct sockaddr *serv_addr, socklen_t serv_
 int main(int argc, char* argv[]) {
     int                udp_sock;
     struct sockaddr_in serv_addr; // Server's address assembled here
-    struct hostent     * host_info;
-    char               * server_name;
+    struct hostent* host_info;
+    char          * server_name;
 
     server_name = (argc == 2) ? argv[1] : "localhost";
 
@@ -81,9 +81,9 @@ int main(int argc, char* argv[]) {
     }
 
     bzero(&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family      = host_info->h_addrtype;
+    serv_addr.sin_family = host_info->h_addrtype;
     memcpy((char*) &serv_addr.sin_addr, host_info->h_addr, host_info->h_length);
-    serv_addr.sin_port        = htons(HANGMAN_UDP_PORT);
+    serv_addr.sin_port = htons(HANGMAN_UDP_PORT);
 
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP
 
