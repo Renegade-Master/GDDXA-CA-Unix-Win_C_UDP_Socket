@@ -19,10 +19,8 @@ char* word[] = {
 #include "../rsc/words"
 };
 
-# define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
-# define MAXLEN 80 // Maximum size in the word of any String
-//# define HANGMAN_TCP_PORT 1066 // Define this in the Specific Header
-
-void play_hangman(int in, int out);
+#define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
+#define MAXLEN 80 // Maximum size in the word of any String
+#define HANGMAN_TCP_GENERIC_PORT 1066 // Define this in the Specific Header
 
 #endif // HANGSERVER_H

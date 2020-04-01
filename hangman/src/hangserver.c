@@ -43,7 +43,7 @@ void play_hangman(int in, int out) {
                 exit(4);
             }
             printf("re-read the start in \n");
-        } // Re-start read () if interrupted by signal/
+        } // Re-start read () if interrupted by signal
         good_guess = 0;
         for (i     = 0; i < word_length; i++) {
             if (guess[0] == whole_word[i]) {
@@ -77,7 +77,7 @@ int main() {
 
     server.sin_family      = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
-    server.sin_port        = htons(HANGMAN_TCP_PORT);
+    server.sin_port        = htons(HANGMAN_TCP_GENERIC_PORT);
 
     if (bind(sock, (struct sockaddr*) &server, sizeof(server)) < 0) {
         perror("binding socket");
