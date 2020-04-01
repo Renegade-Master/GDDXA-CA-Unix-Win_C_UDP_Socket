@@ -4,15 +4,14 @@
 
 int main(int argc, char* argv[]) {
     struct sockaddr_in server; // Server's address assembled here
-    struct hostent     * host_info;
-    int                sock, count;
-    char               i_line[LINESIZE];
-    char               o_line[LINESIZE];
-    char               * server_name;
+    struct hostent* host_info;
+    int  sock, count;
+    char i_line[LINESIZE];
+    char o_line[LINESIZE];
+    char* server_name;
 
     // Get server name from the command line.  If none, use 'localhost'
-
-    server_name = (argc = 1) ? argv[1] : "localhost";
+    server_name = (argc == 1) ? argv[1] : "localhost";
 
     // Create the socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -31,7 +30,7 @@ int main(int argc, char* argv[]) {
 
     server.sin_family = host_info->h_addrtype;
     memcpy((char*) &server.sin_addr, host_info->h_addr, host_info->h_length);
-    server.sin_port = htons(HANGMAN_TCP_PORT);
+    server.sin_port = htons(HANGMAN_TCP_GENERIC_PORT);
 
     if (connect(sock, (struct sockaddr*) &server, sizeof server) < 0) {
         perror("connecting to server");
