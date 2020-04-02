@@ -9,9 +9,9 @@ if ! [ -e bin/ ]; then
 fi
 
 # Clear the existing binary files
-if [ -e bin/hangmanClient ]; then
-  rm bin/hangmanClient
+if [ -e bin/hangclientFork ]; then
+  rm bin/hangclientFork
 fi
 
 # Compile the binary, with WARNINGS replaced with ERRORS
-gcc src/hangclient.c -o bin/hangmanClient -std=gnu99 -Werror
+gcc src/hangclient.c -o bin/hangclientFork -std=gnu99 -Werror
