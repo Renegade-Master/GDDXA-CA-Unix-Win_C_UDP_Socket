@@ -12,6 +12,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 
 extern time_t time();
 

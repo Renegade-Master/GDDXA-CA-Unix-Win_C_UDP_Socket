@@ -5,9 +5,6 @@
 
 extern time_t time();
 
-char* word[] = {
-#include "../rsc/words"
-};
 
 # define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
 # define MAXLEN 80 // Maximum size in the word of any String
@@ -15,9 +12,15 @@ char* word[] = {
 int maxlives = 12;
 
 
+void testGame(int in,int out){
+	
+	printf("Playing Test Connection");
+	exit(0);
+}
+
 
 int main() {
-    int                sock, fd, client_len;
+    int	sock, fd, client_len, childProcCount;
     struct sockaddr_in server, client;
 
     srand((int) time((long*) 0)); // randomize the seed
@@ -38,7 +41,7 @@ int main() {
     }
 
     listen(sock, 5);
-
+	childProcCount = 0;
     while (1) {
         client_len = sizeof(client);
 	    //Accept Connection "FORK HERE!!"
@@ -46,17 +49,40 @@ int main() {
             perror("accepting connection");
             //exit(3);
         }
-        int pid = fork();
+        pid_t pid = fork();
         
-        if(pid==0){
+		if(pid < 0){
+			perror("Fork() Failed");
+		}
+        if(pid==0){ //TODO Gamify with Hangman
             perror("Fork Connection Accepted");
-            
+            //play_hangman(fd,fd);
+			testGame(fd,fd);
+			exit(0);
         }
-        else{
-            close(fd);
-        }
+        
+		//Increment Child Tracker
+		printf("Child Prrocess ID = %d\n" ,pid);
+		close(fd);
+		childProcCount++;
+		//clean up zombies
+		while(childProcCount){
+			pid = waitpid((pid_t) -1 ,NULL,WNOHANG);
+			if(pid < 0){
+				perror("waitpid() failed");
+			}
+			else if(pid ==0){
+				perror("No Zombies, break");
+				break;
+			}
+			else{
+				perror("Zombie terminated");
+				childProcCount--;
+			}
+		}
         
         //play_hangman(fd, fd);
         close(fd);
     }
 }
+
