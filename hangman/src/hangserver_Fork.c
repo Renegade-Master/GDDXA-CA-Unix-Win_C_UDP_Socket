@@ -12,12 +12,78 @@ extern time_t time();
 int maxlives = 12;
 
 
-void testGame(int in,int out){
+void testGameNoZombie(int in,int out){
 	
-	printf("Playing Test Connection");
+	printf("\nPlaying Test Connection\n\n");
+	while(1){
+		
+	}
 	exit(0);
 }
 
+void testGameZombie(int in,int out){
+	
+	printf("\nPlaying Test Connection\n\n");
+
+	exit(0);
+}
+
+
+void play_hangman(int in, int out) {
+    char* whole_word, part_word[MAXLEN],
+                      guess[MAXLEN], outbuf[MAXLEN];
+
+    int  lives      = maxlives;
+    int  game_state = 'I';//I = Incomplete
+    int  i, good_guess, word_length;
+    char hostname[MAXLEN];
+
+    gethostname(hostname, MAXLEN);
+    sprintf(outbuf, "Playing hangman on host %s: \n\n", hostname);
+    write(out, outbuf, strlen(outbuf));
+
+    // Pick a word at random from the list
+    whole_word  = word[rand() % NUM_OF_WORDS];
+    word_length = strlen(whole_word);
+    syslog(LOG_USER | LOG_INFO, "Server chose hangman word %s", whole_word);
+
+    // No letters are guessed Initially
+    for (i = 0; i < word_length; i++) {
+        part_word[i] = '-';
+    }
+
+    part_word[i] = '\0';
+
+    sprintf(outbuf, "%s %d \n", part_word, lives);
+    write(out, outbuf, strlen(outbuf));
+
+    while (game_state == 'I')
+        // Get a letter from player guess
+    {
+        while (read(in, guess, MAXLEN) < 0) {
+            if (errno != EINTR) {
+                exit(4);
+            }
+            printf("re-read the start in \n");
+        } // Re-start read () if interrupted by signal
+        good_guess = 0;
+        for (i     = 0; i < word_length; i++) {
+            if (guess[0] == whole_word[i]) {
+                good_guess = 1;
+                part_word[i] = whole_word[i];
+            }
+        }
+        if (!good_guess) { lives--; }
+        if (strcmp(whole_word, part_word) == 0) {
+            game_state = 'W'; // W ==> User Won
+        } else if (lives == 0) {
+            game_state = 'L'; // L ==> User Lost
+            strcpy(part_word, whole_word); // User Show the word
+        }
+        sprintf(outbuf, "%s %d \n", part_word, lives);
+        write(out, outbuf, strlen(outbuf));
+    }
+}
 
 int main() {
     int	sock, fd, client_len, childProcCount;
@@ -47,7 +113,7 @@ int main() {
 	    //Accept Connection "FORK HERE!!"
         if ((fd    = accept(sock, (struct sockaddr*) &client, &client_len)) < 0) {
             perror("accepting connection");
-            //exit(3);
+            exit(3);
         }
         pid_t pid = fork();
         
@@ -56,20 +122,19 @@ int main() {
 		}
         if(pid==0){ //TODO Gamify with Hangman
             perror("Fork Connection Accepted");
-            //play_hangman(fd,fd);
-			testGame(fd,fd);
+            play_hangman(fd,fd);
 			exit(0);
         }
         
 		//Increment Child Tracker
-		printf("Child Prrocess ID = %d\n" ,pid);
+		printf("",pid);
 		close(fd);
 		childProcCount++;
 		//clean up zombies
 		while(childProcCount){
 			pid = waitpid((pid_t) -1 ,NULL,WNOHANG);
 			if(pid < 0){
-				perror("waitpid() failed");
+				perror("waitpid() failed No Zombie Found");
 			}
 			else if(pid ==0){
 				perror("No Zombies, break");
@@ -82,7 +147,7 @@ int main() {
 		}
         
         //play_hangman(fd, fd);
-        close(fd);
+        //close(fd);
     }
 }
 
