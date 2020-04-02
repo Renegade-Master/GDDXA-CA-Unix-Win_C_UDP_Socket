@@ -15,3 +15,4 @@ fi
 
 # Compile the binary, with WARNINGS replaced with ERRORS
 gcc src/hangserver_Fork.c -o bin/hangmanServer_Fork -std=gnu99 -Werror
+
