@@ -15,8 +15,8 @@
  *  Hangman game.
  *  ToDo: Fill this function out
  * @param sock      - The Server socket to Send/Receive to/from
- * @param cli_addr  - The address of the remote Server
- * @param cli_len   - The length of the Server Address Structure
+ * @param serv_addr  - The address of the remote Server
+ * @param serv_len   - The length of the Server Address Structure
  */
 void play_hangman(int sock, const struct sockaddr* serv_addr, socklen_t serv_len) {
     fprintf(stdout, "Playing Hangman\n");
@@ -27,33 +27,52 @@ void play_hangman(int sock, const struct sockaddr* serv_addr, socklen_t serv_len
  * test_connection() function is used to verify that a connection can be
  *  made to a Server.
  * @param sock      - The Server socket to Send/Receive to/from
- * @param cli_addr  - The address of the remote Server
- * @param cli_len   - The length of the Server Address Structure
+ * @param serv_addr  - The address of the remote Server
+ * @param serv_len   - The length of the Server Address Structure
  */
 void test_connection(int sock, const struct sockaddr* serv_addr, socklen_t serv_len) {
     int  count;
-    char i_line[LINESIZE + 1];
-    char o_line[LINESIZE];
+    char i_line[MAXLEN + 1];
+    char o_line[MAXLEN];
+//    struct udp_data data;
+
+    // Zero the data out
     bzero(&i_line, sizeof(i_line));
     bzero(&o_line, sizeof(o_line));
+
+//    bzero(&data.client_id, sizeof(data.client_id));
+//    bzero(&data.message, sizeof(data.message));
+
+//    fprintf(stdout, "DataCli: %d\n", data.client_id);
+//    fprintf(stdout, "DataMsg: %s\n", data.message);
+
+//    data.client_id = rand() % MAXPLAYERS; // NOLINT
 
     fprintf(stdout, "Testing Connection\n");
 
     fprintf(stdout, ">>");
-    while (fgets(o_line, LINESIZE, stdin) != NULL) {
+    while (fgets(o_line, MAXLEN, stdin) != NULL) {
         fprintf(stdout, "Sending: %s\n", o_line);
 
+        // Load data into structure
+//        strlcpy(data.message, o_line, MAXLEN);
+
+//        fprintf(stdout, "DataCli: %d\n", data.client_id);
+//        fprintf(stdout, "DataMsg: %s\n", data.message);
+
+//        sendto(sock, &data, strlen(o_line), 0, serv_addr, serv_len);
         sendto(sock, o_line, strlen(o_line), 0, serv_addr, serv_len);
 
-        count = recvfrom(sock, i_line, LINESIZE, 0, NULL, NULL);
+        count = recvfrom(sock, i_line, MAXLEN, 0, NULL, NULL);
 
         i_line[count] = 0;
         fprintf(stdout, "Received: %s\n---\n", i_line);
 
         bzero(&i_line, sizeof(i_line));
         bzero(&o_line, sizeof(o_line));
+//        bzero(&data.message, sizeof(data.message));
 
-        fprintf(stdout, ">>");
+        fprintf(stdout, "\n>>");
     }
 }
 
@@ -71,6 +90,9 @@ int main(int argc, char* argv[]) {
     struct sockaddr_in serv_addr; // Server's address assembled here
     struct hostent* host_info;
     char          * server_name;
+
+    struct timespec tp;
+    srand((int) clock_gettime(CLOCK_MONOTONIC, &tp));
 
     server_name = (argc == 2) ? argv[1] : "localhost";
 

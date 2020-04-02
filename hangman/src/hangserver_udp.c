@@ -33,6 +33,10 @@ void play_hangman(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
 void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
     int  count;
     char i_line[MAXLEN];
+//    struct udp_data data;
+
+//    bzero(&data.client_id, sizeof(data.client_id));
+//    bzero(&data.message, sizeof(data.message));
 
     fprintf(stdout, "Testing Connection\n");
 
@@ -43,6 +47,11 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
         // Receive data from the Client Socket
         count = recvfrom(sock, i_line, MAXLEN, 0, cli_addr, &cli_len);
         i_line[count] = 0;
+//        count = recvfrom(sock, &data, MAXLEN, 0, cli_addr, &cli_len);
+//        data.message[count] = 0;
+
+//        fprintf(stdout, "---\nRaw Data: %d\n", data.client_id);
+//        fprintf(stdout, "Raw Data: %s\n---\n", data.message);
 
         // Check the received data for errors
         if (count < 0) {
@@ -52,10 +61,13 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
 
         // Print the received message to the screen
         fprintf(stdout, "Messg Received: %s", i_line);
-        fprintf(stdout, "Bytes Received: %d\n\n", count);
+//        fprintf(stdout, "Messg Received: %s", data.message);
+//        fprintf(stdout, "Bytes Received: %d\n\n", count);
 
         // Send data to the Client Socket
         count = sendto(sock, i_line, count, 0, cli_addr, cli_len);
+//        count = sendto(sock, data.message, count, 0, cli_addr, cli_len);
+
 
         // Check that there were no errors with sending the data
         if (count < 0) {
@@ -65,7 +77,8 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
 
         // Print confirmation of the send to the screen
         fprintf(stdout, "Messg Sent: %s", i_line);
-        fprintf(stdout, "Bytes sent: %d\n\n", count);
+//        fprintf(stdout, "Messg Sent: %s", data.message);
+//        fprintf(stdout, "Bytes sent: %d\n\n", count);
     } while (strcmp(i_line, "#quit") != 0); // ToDo: Create stop condition that actually works
 }
 
@@ -80,7 +93,8 @@ int main() {
     int                udp_sock;
     struct sockaddr_in serv_addr, cli_addr;
 
-    srand((int) time((long*) 0)); // randomize the seed
+    struct timespec tp;
+    srand((int) clock_gettime(CLOCK_MONOTONIC, &tp)); // randomize the seed
 
     // Create the UDP Socket
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP
