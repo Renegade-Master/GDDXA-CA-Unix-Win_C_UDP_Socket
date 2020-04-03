@@ -14,8 +14,10 @@
 #include "datatypes_client.h"
 #include "datatypes_udp.h"
 
-void play_hangman(int sock, const struct sockaddr* serv_addr, socklen_t serv_len);
+void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[IDLEN]);
 
-void test_connection(int sock, const struct sockaddr* serv_addr, socklen_t serv_len);
+void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len);
+
+void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len);
 
 #endif //HANGMAN_HANGSERVER_UDP_H

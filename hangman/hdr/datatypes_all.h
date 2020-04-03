@@ -18,6 +18,5 @@
 #include <time.h>
 
 #define MAXLEN 80
-#define MAXPLAYERS 10
 
 #endif //HANGMAN_DATATYPES_ALL_H

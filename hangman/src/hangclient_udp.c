@@ -14,38 +14,39 @@
  * play_hangman() function is used to handle playing the Networked
  *  Hangman game.
  *  ToDo: Fill this function out
- * @param sock      - The Server socket to Send/Receive to/from
- * @param cli_addr  - The address of the remote Server
- * @param cli_len   - The length of the Server Address Structure
  */
-void play_hangman(int sock, const struct sockaddr* serv_addr, socklen_t serv_len) {
-    fprintf(stdout, "Playing Hangman\n");
+void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[IDLEN]) {
+    fprintf(stdout, "Playing Hangman as Client #%s\n", cli_id);
 }
 
 
 /**
  * test_connection() function is used to verify that a connection can be
  *  made to a Server.
- * @param sock      - The Server socket to Send/Receive to/from
- * @param cli_addr  - The address of the remote Server
- * @param cli_len   - The length of the Server Address Structure
+ * @param sock       - The Server socket to Send/Receive to/from
+ * @param serv_addr  - The address of the remote Server
+ * @param serv_len   - The length of the Server Address Structure
  */
-void test_connection(int sock, const struct sockaddr* serv_addr, socklen_t serv_len) {
+void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
     int  count;
-    char i_line[LINESIZE + 1];
-    char o_line[LINESIZE];
+    char i_line[MAXLEN + 1];
+    char o_line[MAXLEN];
+
+    // Zero the data out
     bzero(&i_line, sizeof(i_line));
     bzero(&o_line, sizeof(o_line));
 
     fprintf(stdout, "Testing Connection\n");
 
     fprintf(stdout, ">>");
-    while (fgets(o_line, LINESIZE, stdin) != NULL) {
+    while (fgets(o_line, MAXLEN, stdin) != NULL) {
         fprintf(stdout, "Sending: %s\n", o_line);
 
+        // Send the data to the Server
         sendto(sock, o_line, strlen(o_line), 0, serv_addr, serv_len);
 
-        count = recvfrom(sock, i_line, LINESIZE, 0, NULL, NULL);
+        // Receive a reply from the Server
+        count = recvfrom(sock, i_line, MAXLEN, 0, NULL, NULL);
 
         i_line[count] = 0;
         fprintf(stdout, "Received: %s\n---\n", i_line);
@@ -53,8 +54,51 @@ void test_connection(int sock, const struct sockaddr* serv_addr, socklen_t serv_
         bzero(&i_line, sizeof(i_line));
         bzero(&o_line, sizeof(o_line));
 
-        fprintf(stdout, ">>");
+        fprintf(stdout, "\n>>");
     }
+}
+
+
+/**
+ * setup_connection() function is used to receive a number from the
+ *  Server to use when sending any data so that the Server knows which
+ *  Client this is.
+ * @param sock
+ * @param serv_addr
+ * @param serv_len
+ */
+void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
+    int  count;
+    char id_request[IDLEN + 1];
+    char id_response[IDLEN];
+
+    // Zero the data out
+    bzero(&id_request, sizeof(id_request));
+    bzero(&id_response, sizeof(id_response));
+
+    // Assign request character
+    strlcpy(id_request, "-1", IDLEN);
+
+    fprintf(stdout, "Sending: %s\n", id_request);
+
+    // Send the data to the Server
+    sendto(sock, id_request, IDLEN, 0, serv_addr, serv_len);
+
+    // Receive a reply from the Server
+    count = recvfrom(sock, id_response, IDLEN, 0, serv_addr, &serv_len);
+
+    // Check the received data for errors
+    if (count < 0) {
+        perror("Receiving from Server Socket Failed\n");
+        exit(3); // Error Condition 03
+    }
+
+    //id_response[count] = '\0';
+    fprintf(stdout, "Received: %s\n---\n", id_response);
+
+    bzero(&id_request, sizeof(id_request));
+
+    play_hangman(sock, (struct sockaddr*) &serv_addr, sizeof(*serv_addr), id_response);
 }
 
 
@@ -71,6 +115,9 @@ int main(int argc, char* argv[]) {
     struct sockaddr_in serv_addr; // Server's address assembled here
     struct hostent* host_info;
     char          * server_name;
+
+    struct timespec tp;
+    srand((int) clock_gettime(CLOCK_MONOTONIC, &tp));
 
     server_name = (argc == 2) ? argv[1] : "localhost";
 
@@ -95,6 +142,6 @@ int main(int argc, char* argv[]) {
 
     fprintf(stdout, "UDP Client Socket Created\n");
 
-    test_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
-    // play_hangman(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
+    //test_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
+    setup_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
 }
