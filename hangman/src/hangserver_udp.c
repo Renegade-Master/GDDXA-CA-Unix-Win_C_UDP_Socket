@@ -14,29 +14,26 @@
  * play_hangman() function is used to handle playing the Networked
  *  Hangman game.
  *  ToDo: Fill this function out
- * @param sock      - The Client socket to Send/Receive to/from
- * @param cli_addr  - The address of the remote Client
+ * @param sock      - The Server socket to Send/Receive to/from
+ * @param cli_addrs - The addresses of the remote Clients
  * @param cli_len   - The length of the Client Address Structure
  */
-void play_hangman(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
-    fprintf(stdout, "Playing Hangman\n");
+void play_hangman(int sock, const void* cli_addrs, socklen_t cli_len) {
+    fprintf(stdout, "\n---\nPlaying Hangman\n");
+    fprintf(stdout, "\nThere are %lu Clients in play", (sizeof(cli_addrs) / sizeof(cli_len)));
 }
 
 
 /**
  * test_connection() function is used to verify that a connection can be
  *  made to a Client.
- * @param sock      - The Client socket to Send/Receive to/from
+ * @param sock      - The Server socket to Send/Receive to/from
  * @param cli_addr  - The address of the remote Client
  * @param cli_len   - The length of the Client Address Structure
  */
 void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
     int  count;
     char i_line[MAXLEN];
-//    struct udp_data data;
-
-//    bzero(&data.client_id, sizeof(data.client_id));
-//    bzero(&data.message, sizeof(data.message));
 
     fprintf(stdout, "Testing Connection\n");
 
@@ -46,12 +43,7 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
 
         // Receive data from the Client Socket
         count = recvfrom(sock, i_line, MAXLEN, 0, cli_addr, &cli_len);
-        i_line[count] = 0;
-//        count = recvfrom(sock, &data, MAXLEN, 0, cli_addr, &cli_len);
-//        data.message[count] = 0;
-
-//        fprintf(stdout, "---\nRaw Data: %d\n", data.client_id);
-//        fprintf(stdout, "Raw Data: %s\n---\n", data.message);
+        i_line[count] = '\0';
 
         // Check the received data for errors
         if (count < 0) {
@@ -61,12 +53,9 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
 
         // Print the received message to the screen
         fprintf(stdout, "Messg Received: %s", i_line);
-//        fprintf(stdout, "Messg Received: %s", data.message);
-//        fprintf(stdout, "Bytes Received: %d\n\n", count);
 
         // Send data to the Client Socket
         count = sendto(sock, i_line, count, 0, cli_addr, cli_len);
-//        count = sendto(sock, data.message, count, 0, cli_addr, cli_len);
 
 
         // Check that there were no errors with sending the data
@@ -77,9 +66,60 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
 
         // Print confirmation of the send to the screen
         fprintf(stdout, "Messg Sent: %s", i_line);
-//        fprintf(stdout, "Messg Sent: %s", data.message);
-//        fprintf(stdout, "Bytes sent: %d\n\n", count);
-    } while (strcmp(i_line, "#quit") != 0); // ToDo: Create stop condition that actually works
+    } while (strcmp(i_line, "#quit\0") != 0); // ToDo: Create stop condition that actually works
+}
+
+
+/**
+ * setup_connections() function is used to add Clients to the game.
+ * @param sock      - The Client socket to Send/Receive to/from
+ * @param cli_addr  - The address of the remote Client
+ * @param cli_len   - The length of the Client Address Structure
+ */
+void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, const int* cli_count) {
+    int  count;
+    char id_request[IDLEN];
+    char id_response[IDLEN];
+
+    // Zero out data
+    bzero(&count, sizeof(count));
+    bzero(&id_request, sizeof(id_request));
+    bzero(&id_response, sizeof(id_response));
+
+    fprintf(stdout, "\nSetting Up New Client\n");
+    fprintf(stdout, "\nAwaiting request on Socket %d...\n", sock);
+
+    // Receive data from the Client Socket
+    count = recvfrom(sock, id_request, IDLEN, 0, cli_addr, &cli_len);
+
+    // Check the received data for errors
+    if (count < 0) {
+        perror("Receiving from Client Socket Failed\n");
+        exit(3); // Error Condition 03
+    }
+
+    // Print the received message to the screen
+    fprintf(stdout, "\nMessg Received: %s", id_request);
+
+    // Assign a Client ID to the Client if it is new
+    if (strcmp(id_request, "-1\0") == 0) {
+        fprintf(stdout, "\nClient is new.  Assigning ID: %d", *cli_count);
+        sprintf(id_response, "%d", *cli_count); // Convert the int to char*
+    } else {
+        fprintf(stdout, "\nClient already assigned ID");
+    }
+
+    // Send data to the Client Socket
+    count = sendto(sock, id_response, IDLEN, 0, (struct sockaddr*) cli_addr, cli_len);
+
+    // Check that there were no errors with sending the data
+    if (count < 0) {
+        perror("Sending to Client Socket Failed\n");
+        exit(4); // Error Condition 04
+    }
+
+    // Print confirmation of the send to the screen
+    fprintf(stdout, "\nMessg Sent: %s\n", id_response);
 }
 
 
@@ -91,10 +131,22 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
  */
 int main() {
     int                udp_sock;
-    struct sockaddr_in serv_addr, cli_addr;
+    struct sockaddr_in serv_addr;
+    struct sockaddr_in cli_addrs[MAXPLAYERS];
+    int                connected_clients;
 
+    // Zero out Server data
+    bzero(&serv_addr, sizeof(serv_addr));
+    bzero(&udp_sock, sizeof(udp_sock));
+    bzero(&connected_clients, sizeof(connected_clients));
+
+    for (int i = 0; i < MAXPLAYERS; i++) {
+        bzero(&cli_addrs[i], sizeof(cli_addrs[i]));
+    }
+
+    // Seed the random number generator
     struct timespec tp;
-    srand((int) clock_gettime(CLOCK_MONOTONIC, &tp)); // randomize the seed
+    srand((int) clock_gettime(CLOCK_MONOTONIC, &tp));
 
     // Create the UDP Socket
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP
@@ -105,7 +157,6 @@ int main() {
         exit(1); // Error Condition 01
     }
 
-    bzero(&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family      = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port        = htons(HANGMAN_UDP_PORT);
@@ -118,7 +169,15 @@ int main() {
     fprintf(stdout, "UDP Server Socket Created\n");
 
     // Handle connections
-    // ToDo: Accept X number of Clients for playing Hangman with
-    test_connection(udp_sock, (struct sockaddr*) &cli_addr, sizeof(cli_addr));
-    // play_hangman(udp_sock, (struct sockaddr*) &cli_addr, sizeof(cli_addr));
+    //test_connection(udp_sock, (struct sockaddr*) &cli_addr, sizeof(cli_addr));
+
+    // Accept Clients until all game slots are full
+    connected_clients = 1;
+    for (int i = 0; i < MAXPLAYERS; i++) {
+        fprintf(stdout, "\n---\nCreating Client #%d", connected_clients);
+        setup_connections(udp_sock, (struct sockaddr*) &cli_addrs[i], sizeof(cli_addrs[i]), &connected_clients);
+        connected_clients++;
+    }
+
+    play_hangman(udp_sock, &cli_addrs, sizeof(struct sockaddr));
 }

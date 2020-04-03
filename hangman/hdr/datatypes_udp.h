@@ -11,10 +11,6 @@
 #define HANGMAN_DATATYPES_UDP_H
 
 #define HANGMAN_UDP_PORT 1337
-
-struct udp_data {
-    int  client_id;
-    char message[MAXLEN + 1];
-};
+#define IDLEN 3
 
 #endif //HANGMAN_DATATYPES_UDP_H

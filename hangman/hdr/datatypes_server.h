@@ -15,5 +15,6 @@ char* word[] = {
 };
 
 #define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
+#define MAXPLAYERS 2
 
 #endif //HANGMAN_DATATYPES_SERVER_H
