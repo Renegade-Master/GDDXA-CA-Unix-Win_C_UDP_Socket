@@ -149,6 +149,7 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
         // Send the data to the Server
         sendto(sock, o_line, strlen(o_line), 0, serv_addr, serv_len);
 
+<<<<<<< Updated upstream
         // Receive a reply from the Server
         count = recvfrom(sock, i_line, MAX_LEN, 0, NULL, NULL);
 

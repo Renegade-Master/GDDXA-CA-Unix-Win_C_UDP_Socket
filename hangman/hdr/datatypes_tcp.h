@@ -1,0 +1,10 @@
+
+#ifndef HANGMAN_DATATYPES_TCP_H
+#define HANGMAN_DATATYPES_TCP_H
+
+#include <unistd.h>
+
+#define HANGMAN_TCP_PORT 1168
+
+
+#endif //HANGMAN_DATATYPES_TCP_H

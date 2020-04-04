@@ -1,20 +1,20 @@
 /* Network server for hangman game */
 /* File: hangserver.c */
 
-#include "../hdr/hangserver.h"
+#include "../hdr/hangserver_tcp_fork.h"
+
 
 extern time_t time();
 
 
 # define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
 # define MAXLEN 80 // Maximum size in the word of any String
-# define HANGMAN_TCP_PORT 1066
 int maxlives = 12;
 
 
 void testGameNoZombie(int in,int out){
 	
-	printf("\nPlaying Test Connection\n\n");
+	printf("\n--Playing Test Connection--\n\n");
 	while(1){
 		
 	}
@@ -23,77 +23,36 @@ void testGameNoZombie(int in,int out){
 
 void testGameZombie(int in,int out){
 	
-	printf("\nPlaying Test Connection\n\n");
+	printf("\n--Playing Test Connection--\n\n");
 
 	exit(0);
 }
 
 
 void play_hangman(int in, int out) {
-    char* whole_word, part_word[MAXLEN],
-                      guess[MAXLEN], outbuf[MAXLEN];
-
-    int  lives      = maxlives;
-    int  game_state = 'I';//I = Incomplete
-    int  i, good_guess, word_length;
-    char hostname[MAXLEN];
-
-    gethostname(hostname, MAXLEN);
-    sprintf(outbuf, "Playing hangman on host %s: \n\n", hostname);
-    write(out, outbuf, strlen(outbuf));
-
-    // Pick a word at random from the list
-    whole_word  = word[rand() % NUM_OF_WORDS];
-    word_length = strlen(whole_word);
-    syslog(LOG_USER | LOG_INFO, "Server chose hangman word %s", whole_word);
-
-    // No letters are guessed Initially
-    for (i = 0; i < word_length; i++) {
-        part_word[i] = '-';
-    }
-
-    part_word[i] = '\0';
-
-    sprintf(outbuf, "%s %d \n", part_word, lives);
-    write(out, outbuf, strlen(outbuf));
-
-    while (game_state == 'I')
-        // Get a letter from player guess
-    {
-        while (read(in, guess, MAXLEN) < 0) {
-            if (errno != EINTR) {
-                exit(4);
-            }
-            printf("re-read the start in \n");
-        } // Re-start read () if interrupted by signal
-        good_guess = 0;
-        for (i     = 0; i < word_length; i++) {
-            if (guess[0] == whole_word[i]) {
-                good_guess = 1;
-                part_word[i] = whole_word[i];
-            }
-        }
-        if (!good_guess) { lives--; }
-        if (strcmp(whole_word, part_word) == 0) {
-            game_state = 'W'; // W ==> User Won
-        } else if (lives == 0) {
-            game_state = 'L'; // L ==> User Lost
-            strcpy(part_word, whole_word); // User Show the word
-        }
-        sprintf(outbuf, "%s %d \n", part_word, lives);
-        write(out, outbuf, strlen(outbuf));
-    }
+    fprintf(stdout, "\n--Playing Hangman--");
+    fprintf(stdout, "\n--in", in);
+    fprintf(stdout, "\n--out", out);
 }
 
 int main() {
     int	sock, fd, client_len, childProcCount;
     struct sockaddr_in server, client;
 
+    //Zero out server data
+    bzero(&server, sizeof(server));
+    bzero(&client,sizeof(client));
+    bzero(&sock, sizeof(sock));
+    bzero(&fd, sizeof(fd));
+    bzero(&client_len, sizeof(client_len));
+    bzero(&childProcCount, sizeof(childProcCount));
+
+
     srand((int) time((long*) 0)); // randomize the seed
 
     sock = socket(AF_INET, SOCK_STREAM, 0);//0 or IPPROTO_TCP
     if (sock < 0) { // This error checking is the code Stevens wraps in his Socket Function etc
-        perror("creating stream socket");
+        perror("\n--creating stream socket--");
         exit(1);
     }
 
@@ -102,7 +61,7 @@ int main() {
     server.sin_port        = htons(HANGMAN_TCP_PORT);
 
     if (bind(sock, (struct sockaddr*) &server, sizeof(server)) < 0) {
-        perror("binding socket");
+        perror("\n--binding socket--");
         exit(2);
     }
 
@@ -112,42 +71,43 @@ int main() {
         client_len = sizeof(client);
 	    //Accept Connection "FORK HERE!!"
         if ((fd    = accept(sock, (struct sockaddr*) &client, &client_len)) < 0) {
-            perror("accepting connection");
+            perror("\n--Error accepting connection--");
             exit(3);
         }
         pid_t pid = fork();
         
 		if(pid < 0){
-			perror("Fork() Failed");
+			perror("\n--Fork() Failed--");
 		}
         if(pid==0){ //TODO Gamify with Hangman
-            perror("Fork Connection Accepted");
+            perror("\n--Fork Connection Accepted--");
             play_hangman(fd,fd);
 			exit(0);
         }
         
 		//Increment Child Tracker
-		printf("",pid);
 		close(fd);
 		childProcCount++;
+
+
 		//clean up zombies
 		while(childProcCount){
+		    //Get Current State of processes
 			pid = waitpid((pid_t) -1 ,NULL,WNOHANG);
+
 			if(pid < 0){
-				perror("waitpid() failed No Zombie Found");
+				perror("\n--waitpid() failed No Zombie Found--");
 			}
 			else if(pid ==0){
-				perror("No Zombies, break");
+				perror("\n--No Zombies, break--");
 				break;
 			}
 			else{
-				perror("Zombie terminated");
+				perror("\n--Zombie terminated--");
 				childProcCount--;
 			}
 		}
         
-        //play_hangman(fd, fd);
-        //close(fd);
     }
 }
 

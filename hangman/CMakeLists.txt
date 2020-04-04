@@ -23,7 +23,7 @@ include_directories(.)
 set(TCP_FORK_CLIENT_SOURCE_FILES
         src/hangclient.c)
 set(TCP_FORK_SERVER_SOURCE_FILES
-        src/hangserver.c)
+        src/hangserver_Fork.c)
 
 # Source files for the TCP Select Application
 set(TCP_SELECT_CLIENT_SOURCE_FILES
