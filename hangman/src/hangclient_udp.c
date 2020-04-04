@@ -16,7 +16,65 @@
  *  ToDo: Fill this function out
  */
 void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[IDLEN]) {
+    int  count;
+    int  round;
+    char i_line[MAXLEN];
+    char o_guess[GUESSLEN];
+    char temp_guess[GUESSLEN];
+
+    // Zero out all data before starting
+    bzero(&count, sizeof(count));
+    bzero(&round, sizeof(round));
+    bzero(&i_line, sizeof(i_line));
+    bzero(&o_guess, sizeof(o_guess));
+    bzero(&temp_guess, sizeof(temp_guess));
+
     fprintf(stdout, "Playing Hangman as Client #%s\n", cli_id);
+
+    // Receive the Hostname of the Server
+    count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
+
+    // Check the received data for errors
+    if (count < 0) {
+        perror("Receiving from Server Socket Failed\n");
+        exit(4); // Error Condition 04
+    }
+
+    fprintf(stdout, "Playing on Host: %s\n", i_line);
+
+    // Play the game
+    do {
+        fprintf(stdout, "\n---\nRound: %d", ++round);
+
+        // Receive the current game state
+        count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
+
+        // Check the received data for errors
+        if (count < 0) {
+            perror("Receiving from Server Socket Failed\n");
+            exit(4); // Error Condition 04
+        }
+
+        fprintf(stdout, "\nGame State: %s", i_line);
+
+        // Securely retrieve data from the User
+        fprintf(stdout, "Guess a Letter\n>>");
+        temp_guess[0] = (char) fgetc(stdin);
+        strlcat(temp_guess, "\0", GUESSLEN);
+        strlcpy(o_guess, temp_guess, GUESSLEN);
+
+        fprintf(stdout, "Guess was: %s", o_guess);
+
+        // Send the data to the Server
+        count = sendto(sock, o_guess, GUESSLEN, 0, serv_addr, serv_len);
+
+        // Check the sent data for errors
+        if (count < 0) {
+            perror("Sending to Server Socket Failed\n");
+            exit(3); // Error Condition 03
+        }
+
+    } while (strcmp(i_line, "#GAMEOVER\0") != 0);
 }
 
 
@@ -47,6 +105,12 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
 
         // Receive a reply from the Server
         count = recvfrom(sock, i_line, MAXLEN, 0, NULL, NULL);
+
+        // Check the received data for errors
+        if (count < 0) {
+            perror("Receiving from Server Socket Failed\n");
+            exit(3); // Error Condition 03
+        }
 
         i_line[count] = 0;
         fprintf(stdout, "Received: %s\n---\n", i_line);
@@ -82,7 +146,13 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
     fprintf(stdout, "Sending: %s\n", id_request);
 
     // Send the data to the Server
-    sendto(sock, id_request, IDLEN, 0, serv_addr, serv_len);
+    count = sendto(sock, id_request, IDLEN, 0, serv_addr, serv_len);
+
+    // Check the sent data for errors
+    if (count < 0) {
+        perror("Sending to Server Socket Failed\n");
+        exit(3); // Error Condition 03
+    }
 
     // Receive a reply from the Server
     count = recvfrom(sock, id_response, IDLEN, 0, serv_addr, &serv_len);
@@ -90,10 +160,9 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
     // Check the received data for errors
     if (count < 0) {
         perror("Receiving from Server Socket Failed\n");
-        exit(3); // Error Condition 03
+        exit(4); // Error Condition 04
     }
 
-    //id_response[count] = '\0';
     fprintf(stdout, "Received: %s\n---\n", id_response);
 
     bzero(&id_request, sizeof(id_request));
@@ -116,6 +185,7 @@ int main(int argc, char* argv[]) {
     struct hostent* host_info;
     char          * server_name;
 
+    // Seed the random number generator
     struct timespec tp;
     srand((int) clock_gettime(CLOCK_MONOTONIC, &tp));
 
