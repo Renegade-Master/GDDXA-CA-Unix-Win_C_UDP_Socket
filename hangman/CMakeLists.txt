@@ -21,7 +21,7 @@ include_directories(.)
 
 # Source files for the TCP Fork Application
 set(TCP_FORK_CLIENT_SOURCE_FILES
-        src/hangclient.c)
+        src/hangclient.c src/hangClient_Fork.c)
 set(TCP_FORK_SERVER_SOURCE_FILES
         src/hangserver_Fork.c)
 

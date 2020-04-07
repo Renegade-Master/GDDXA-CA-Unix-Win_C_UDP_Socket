@@ -1,4 +1,6 @@
-/* Hangclient.c - Client for hangman server.  */
+//
+// Created by Rory Ryan on 05/04/2020.
+//
 
 #include "../hdr/hangclient.h"
 
@@ -26,8 +28,9 @@ int main(int argc, char* argv[]) {
         exit(2);
     }
 
-    // Set up the server's socket address, then connect
 
+
+    // Set up the server's socket address, then connect
     server.sin_family = host_info->h_addrtype;
     memcpy((char*) &server.sin_addr, host_info->h_addr, host_info->h_length);
     server.sin_port = htons(HANGMAN_TCP_GENERIC_PORT);
@@ -43,7 +46,7 @@ int main(int argc, char* argv[]) {
         Repeat until the server terminates the connection.
     */
 
-    printf("Connected to server %s \n", server_name);
+    printf("\n---\nConnected to server %s---\n", server_name);
     while ((count = read(sock, i_line, LINESIZE)) > 0) {
         write(1, i_line, count);
         count = read(0, o_line, LINESIZE);//0 = STDIN
