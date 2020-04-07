@@ -23,10 +23,9 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
 
     // Set up the game
     int count;
-
     char* whole_word,
-                    part_word[MAXLEN],
-                    outbuf[MAXLEN];
+            part_word[MAXLEN],
+            outbuf[MAXLEN];
     bool good_guess;
     size_t word_length;
     char hostname[MAXLEN];
@@ -85,7 +84,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
         }
 
         bzero(&outbuf, sizeof(outbuf));
-        sprintf(outbuf, "%s %d \n", part_word, lives);
+        sprintf(outbuf, "%s %d", part_word, lives);
         sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
         // Check that there were no errors with sending the data
@@ -103,6 +102,17 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
 
             // Set the current Client
             cli_addr = (struct sockaddr*) &cli_addrs[i];
+
+            // Inform the Client that it's their turn
+            bzero(&outbuf, sizeof(outbuf));
+            sprintf(outbuf, "%d", (i + 1));
+            sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+
+            // Check that there were no errors with sending the data
+            if (count < 0) {
+                perror("Sending to Client Socket Failed\n");
+                exit(4); // Error Condition 04
+            }
 
             // Send the current state of the game to the Client
             bzero(&outbuf, sizeof(outbuf));
@@ -139,10 +149,48 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
             // If the whole word has been guessed
             if (strcmp(whole_word, part_word) == 0) {
                 game_state = WON; // User Won
+
+                // Let the Client(s) know they WON
+                bzero(&outbuf, sizeof(outbuf));
+                sprintf(outbuf, "%s", "#GAMEOVER");
+                sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+
+                // Check that there were no errors with sending the data
+                if (count < 0) {
+                    perror("Sending to Client Socket Failed\n");
+                    exit(4); // Error Condition 04
+                }
+
             } else if (lives == 0) {
                 game_state = LOST; // User Lost
+
+                // Let the Client(s) know they LOST
+                bzero(&outbuf, sizeof(outbuf));
+                sprintf(outbuf, "%s", "#GAMEOVER");
+                sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+
+                // Check that there were no errors with sending the data
+                if (count < 0) {
+                    perror("Sending to Client Socket Failed\n");
+                    exit(4); // Error Condition 04
+                }
+
                 strcpy(part_word, whole_word); // User Show the word
             }
+        }
+    }
+
+    // Send ENDGAME message
+    for (int i = 0; i < clients_in_play; i++) {
+        // Set the current Client
+        cli_addr = (struct sockaddr*) &cli_addrs[i];
+
+        sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+
+        // Check that there were no errors with sending the data
+        if (count < 0) {
+            perror("Sending to Client Socket Failed\n");
+            exit(4); // Error Condition 04
         }
     }
 }
@@ -156,7 +204,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
  * @param cli_len   - The length of the Client Address Structure
  */
 void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
-    int  count;
+    int count;
     char i_line[MAXLEN];
 
     fprintf(stdout, "Testing Connection\n");
@@ -200,7 +248,7 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
  * @param cli_len   - The length of the Client Address Structure
  */
 void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, const int* cli_count) {
-    int  count;
+    int count;
     char id_request[IDLEN];
     char id_response[IDLEN];
 
@@ -254,10 +302,10 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
  * @return
  */
 int main() {
-    int                udp_sock;
+    int udp_sock;
     struct sockaddr_in serv_addr;
     struct sockaddr_in cli_addrs[MAXPLAYERS];
-    int                connected_clients;
+    int connected_clients;
 
     // Zero out Server data
     bzero(&serv_addr, sizeof(serv_addr));
@@ -281,9 +329,9 @@ int main() {
         exit(1); // Error Condition 01
     }
 
-    serv_addr.sin_family      = AF_INET;
+    serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port        = htons(HANGMAN_UDP_PORT);
+    serv_addr.sin_port = htons(HANGMAN_UDP_PORT);
 
     // Bind the Server socket to an address
     if (bind(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {

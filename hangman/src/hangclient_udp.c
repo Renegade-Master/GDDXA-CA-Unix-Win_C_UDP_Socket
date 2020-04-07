@@ -17,7 +17,7 @@
  */
 void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[IDLEN]) {
     int count;
-    int round;
+    int round_local;
     char hostname[MAXLEN];
     char i_line[MAXLEN];
     char o_guess[GUESSLEN];
@@ -25,7 +25,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
 
     // Zero out all data before starting
     bzero(&count, sizeof(count));
-    bzero(&round, sizeof(round));
+    bzero(&round_local, sizeof(round_local));
     bzero(&hostname, sizeof(hostname));
     bzero(&i_line, sizeof(i_line));
     bzero(&o_guess, sizeof(o_guess));
@@ -47,11 +47,41 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
 
     fprintf(stdout, "Connected to Server: %s\n", i_line);
 
+    // Receive the initial game state
+    bzero(&i_line, sizeof(i_line));
+    count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
+
+    // Check the received data for errors
+    if (count < 0) {
+        perror("Receiving from Server Socket Failed\n");
+        exit(4); // Error Condition 04
+    }
+
+    fprintf(stdout, "\nGame State: %s", i_line);
+
     // Play the game
     do {
-        fprintf(stdout, "\n---\nRound: %d", ++round);
+        // Wait your turn
+        do {
+            // Receive the current turn from the Server
+            bzero(&i_line, sizeof(i_line));
+            count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
+
+            // Check the received data for errors
+            if (count < 0) {
+                perror("Receiving from Server Socket Failed\n");
+                exit(4); // Error Condition 04
+            }
+
+            fprintf(stdout, "\nDoes [%s] == [%s]", i_line, cli_id);
+
+            if (strcmp(i_line, "#GAMEOVER\0") == 0) { exit(0); }
+        } while (strcmp(i_line, cli_id) != 0);
+
+        fprintf(stdout, "\n---\nRound: %d", ++round_local);
 
         // Receive the current game state
+        bzero(&i_line, sizeof(i_line));
         count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
 
         // Check the received data for errors
@@ -63,7 +93,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
         fprintf(stdout, "\nGame State: %s", i_line);
 
         // Securely retrieve data from the User
-        fprintf(stdout, "Guess a Letter\n>>");
+        fprintf(stdout, "\nGuess a Letter\n>>");
         temp_guess[0] = (char) fgetc(stdin);
         strlcat(temp_guess, "\0", GUESSLEN);
         strlcpy(o_guess, temp_guess, GUESSLEN);
@@ -91,7 +121,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
  * @param serv_len   - The length of the Server Address Structure
  */
 void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
-    int  count;
+    int count;
     char i_line[MAXLEN + 1];
     char o_line[MAXLEN];
 
@@ -137,7 +167,7 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
  * @param serv_len
  */
 void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
-    int  count;
+    int count;
     char id_request[IDLEN + 1];
     char id_response[IDLEN];
 
@@ -185,10 +215,10 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
  * @return
  */
 int main(int argc, char* argv[]) {
-    int                udp_sock;
+    int udp_sock;
     struct sockaddr_in serv_addr; // Server's address assembled here
     struct hostent* host_info;
-    char          * server_name;
+    char* server_name;
 
     // Seed the random number generator
     struct timespec tp;
