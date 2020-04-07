@@ -18,7 +18,7 @@
  * @param cli_addrs - The addresses of the remote Clients
  * @param cli_len   - The length of the Client Address Structure
  */
-void play_hangman(int sock, struct sockaddr** cli_addrs, socklen_t cli_len) {
+void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
     fprintf(stdout, "\n---\nPlaying Hangman\n");
 
     // Set up the game
@@ -28,17 +28,18 @@ void play_hangman(int sock, struct sockaddr** cli_addrs, socklen_t cli_len) {
                     part_word[MAXLEN],
                     outbuf[MAXLEN];
     bool good_guess;
-    size_t          word_length;
-    char            hostname[MAXLEN];
-    char            guess[2];
-    int             lives           = MAXLIVES;
-    int             clients_in_play = (sizeof(cli_addrs) / sizeof(cli_len));
-    enum Game_State game_state      = IN_PROGRESS;
+    size_t word_length;
+    char hostname[MAXLEN];
+    char guess[2];
+    int lives = MAXLIVES;
+    int clients_in_play = (sizeof(&cli_addrs) / sizeof(cli_len));
+    enum Game_State game_state = IN_PROGRESS;
 
     // Zero out all data before starting
     bzero(&count, sizeof(count));
     bzero(&whole_word, sizeof(whole_word));
     bzero(&part_word, sizeof(part_word));
+    bzero(&outbuf, sizeof(outbuf));
     bzero(&guess, sizeof(guess));
     bzero(&good_guess, sizeof(good_guess));
     bzero(&word_length, sizeof(word_length));
@@ -47,7 +48,7 @@ void play_hangman(int sock, struct sockaddr** cli_addrs, socklen_t cli_len) {
     fprintf(stdout, "\nThere are %d Clients in play\n", clients_in_play);
 
     // Pick a word at random from the list
-    whole_word  = word[rand() % NUM_OF_WORDS]; // NOLINT
+    whole_word = word[rand() % NUM_OF_WORDS]; // NOLINT
     // `NOLINT` prevents linter from complaining.  `rand()` is a necessary evil
     word_length = strlen(whole_word);
     fprintf(stdout, "\nServer chose hangman word %s", whole_word);
@@ -73,6 +74,7 @@ void play_hangman(int sock, struct sockaddr** cli_addrs, socklen_t cli_len) {
         // Set the current Client
         cli_addr = (struct sockaddr*) &cli_addrs[i];
 
+        bzero(&outbuf, sizeof(outbuf));
         sprintf(outbuf, "%s", hostname);
         sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
@@ -82,6 +84,7 @@ void play_hangman(int sock, struct sockaddr** cli_addrs, socklen_t cli_len) {
             exit(4); // Error Condition 04
         }
 
+        bzero(&outbuf, sizeof(outbuf));
         sprintf(outbuf, "%s %d \n", part_word, lives);
         sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
@@ -102,6 +105,7 @@ void play_hangman(int sock, struct sockaddr** cli_addrs, socklen_t cli_len) {
             cli_addr = (struct sockaddr*) &cli_addrs[i];
 
             // Send the current state of the game to the Client
+            bzero(&outbuf, sizeof(outbuf));
             sprintf(outbuf, "%s %d", part_word, lives);
             sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
@@ -204,6 +208,7 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
     bzero(&count, sizeof(count));
     bzero(&id_request, sizeof(id_request));
     bzero(&id_response, sizeof(id_response));
+    bzero(cli_addr, sizeof(cli_len));
 
     fprintf(stdout, "\nSetting Up New Client\n");
     fprintf(stdout, "\nAwaiting request on Socket %d...\n", sock);
@@ -298,5 +303,5 @@ int main() {
         connected_clients++;
     }
 
-    play_hangman(udp_sock, (struct sockaddr**) cli_addrs, sizeof(struct sockaddr));
+    play_hangman(udp_sock, cli_addrs, sizeof(struct sockaddr));
 }

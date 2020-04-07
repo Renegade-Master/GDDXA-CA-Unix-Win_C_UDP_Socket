@@ -16,8 +16,9 @@
  *  ToDo: Fill this function out
  */
 void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[IDLEN]) {
-    int  count;
-    int  round;
+    int count;
+    int round;
+    char hostname[MAXLEN];
     char i_line[MAXLEN];
     char o_guess[GUESSLEN];
     char temp_guess[GUESSLEN];
@@ -25,11 +26,15 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
     // Zero out all data before starting
     bzero(&count, sizeof(count));
     bzero(&round, sizeof(round));
+    bzero(&hostname, sizeof(hostname));
     bzero(&i_line, sizeof(i_line));
     bzero(&o_guess, sizeof(o_guess));
     bzero(&temp_guess, sizeof(temp_guess));
 
-    fprintf(stdout, "Playing Hangman as Client #%s\n", cli_id);
+    // Get the Human Readable name of this host
+    gethostname(hostname, MAXLEN);
+
+    fprintf(stdout, "Playing Hangman as Client #%s on [%s]\n", cli_id, hostname);
 
     // Receive the Hostname of the Server
     count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
@@ -40,7 +45,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
         exit(4); // Error Condition 04
     }
 
-    fprintf(stdout, "Playing on Host: %s\n", i_line);
+    fprintf(stdout, "Connected to Server: %s\n", i_line);
 
     // Play the game
     do {
