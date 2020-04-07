@@ -14,7 +14,7 @@
 #include "datatypes_server.h"
 #include "datatypes_udp.h"
 
-void play_hangman(int sock, const void* cli_addrs, socklen_t cli_len);
+void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len);
 
 void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len);
 

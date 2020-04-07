@@ -10,6 +10,5 @@
 #ifndef HANGMAN_DATATYPES_CLIENT_H
 #define HANGMAN_DATATYPES_CLIENT_H
 
-#include <netdb.h>
 
 #endif //HANGMAN_DATATYPES_CLIENT_H
