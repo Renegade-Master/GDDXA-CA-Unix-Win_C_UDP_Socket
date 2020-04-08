@@ -10,5 +10,6 @@
 #ifndef HANGMAN_DATATYPES_CLIENT_H
 #define HANGMAN_DATATYPES_CLIENT_H
 
+#include <ctype.h>
 
 #endif //HANGMAN_DATATYPES_CLIENT_H

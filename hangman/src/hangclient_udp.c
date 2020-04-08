@@ -57,11 +57,10 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
         exit(4); // Error Condition 04
     }
 
-    fprintf(stdout, "\nGame State: %s", i_line);
+    fprintf(stdout, "\nInitial Game State:%s", i_line);
 
     // Play the game
     do {
-        // Wait your turn
         do {
             // Receive the current turn from the Server
             memset(&i_line, '\0', sizeof(i_line));
@@ -72,8 +71,6 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
                 perror("Receiving from Server Socket Failed\n");
                 exit(4); // Error Condition 04
             }
-
-            fprintf(stdout, "\nDoes [%s] == [%s]", i_line, cli_id);
 
             if (strcmp(i_line, "#GAMEOVER\0") == 0) { exit(0); }
         } while (strcmp(i_line, cli_id) != 0);
@@ -90,14 +87,26 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
             exit(4); // Error Condition 04
         }
 
-        fprintf(stdout, "\nGame State: %s", i_line);
+        fprintf(stdout, "\nGame State:%s", i_line);
+        memset(&i_line, '\0', sizeof(i_line));
 
         // Securely retrieve data from the User
-        fprintf(stdout, "\nGuess a Letter\n>>");
-        temp_guess[0] = (char) fgetc(stdin);
+        memset(&temp_guess, '\0', sizeof(temp_guess));
+
+        // Don't allow bad characters
+        while (!isalpha((unsigned) temp_guess[0])) { // NOLINT (Bug in CLion)
+            fprintf(stdout, "\nGuess a LETTER [a-z]\n>>");
+            temp_guess[0] = (char) fgetc(stdin);
+        }
+
+        // Convert the letter to lowercase
+        temp_guess[0] = tolower(temp_guess[0]);
+
+        // Terminate the String and prepare it for sending
         strncat(temp_guess, "\0", GUESS_LEN);
         strncpy(o_guess, temp_guess, GUESS_LEN);
 
+        // Show the User what they typed
         fprintf(stdout, "Guess was: %s", o_guess);
 
         // Send the data to the Server

@@ -86,7 +86,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
         }
 
         memset(&outbuf, '\0', sizeof(outbuf));
-        snprintf(outbuf, MAX_TOTAL_LEN, "%s %u", part_word, (unsigned short) lives);
+        snprintf(outbuf, MAX_TOTAL_LEN, "\n\tWord: %s\n\tLives: %hu", part_word, (unsigned short) lives);
         sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
         // Check that there were no errors with sending the data
@@ -120,7 +120,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
 
             // Send the current state of the game to the Client
             memset(&outbuf, '\0', sizeof(outbuf));
-            snprintf(outbuf, MAX_TOTAL_LEN, "%s %hu", part_word, (unsigned short) lives);
+            snprintf(outbuf, MAX_TOTAL_LEN, "\n\tWord: %s\n\tLives: %hu", part_word, (unsigned short) lives);
             sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
             // Check that there were no errors with sending the data
