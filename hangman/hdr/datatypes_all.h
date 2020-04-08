@@ -20,6 +20,6 @@
 #include <unistd.h>
 
 #define MAX_LEN 80
-#define MAX_TOTAL_LEN 96
+#define MAX_TOTAL_LEN 120
 
 #endif //HANGMAN_DATATYPES_ALL_H

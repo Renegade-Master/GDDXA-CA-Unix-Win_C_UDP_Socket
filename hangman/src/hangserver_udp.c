@@ -18,7 +18,7 @@
  * @param cli_addrs - The addresses of the remote Clients
  * @param cli_len   - The length of the Client Address Structure
  */
-void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
+void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, const int* connected_clients) {
     fprintf(stdout, "\n---\nPlaying Hangman\n");
 
     // Set up the game
@@ -31,7 +31,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
     char hostname[MAX_LEN];
     char guess[2];
     int lives;
-    int clients_in_play = (sizeof(&cli_addrs) / sizeof(cli_len));
+    int clients_in_play = *connected_clients;
     enum Game_State game_state = IN_PROGRESS;
 
     // Zero out all data before starting
@@ -254,11 +254,13 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
  */
 void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, const int* cli_count) {
     ssize_t count;
+    int client_id;
     char id_request[ID_LEN];
     char id_response[ID_LEN];
 
     // Zero out data
     memset(&count, '\0', sizeof(count));
+    memset(&client_id, '\0', sizeof(client_id));
     memset(&id_request, '\0', sizeof(id_request));
     memset(&id_response, '\0', sizeof(id_response));
     memset(cli_addr, '\0', sizeof(cli_len));
@@ -277,11 +279,12 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
 
     // Print the received message to the screen
     fprintf(stdout, "\nMessg Received: %s", id_request);
+    client_id = (*cli_count) + 1;
 
     // Assign a Client ID to the Client if it is new
     if (strcmp(id_request, "-1\0") == 0) {
-        fprintf(stdout, "\nClient is new.  Assigning ID: %d", *cli_count);
-        sprintf(id_response, "%d", *cli_count); // Convert the int to char*
+        fprintf(stdout, "\nClient is new.  Assigning ID: %d", client_id);
+        sprintf(id_response, "%d", client_id); // Convert the int to char*
     } else {
         fprintf(stdout, "\nClient already assigned ID");
     }
@@ -306,10 +309,11 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
  *  Hangman game.
  * @return
  */
-int main() {
+int main(int argc, char* argv[]) {
     int udp_sock;
+    int max_players = (argc == 2) ? (int) strtol(argv[1], NULL, 10) : MAX_PLAYERS;
     struct sockaddr_in serv_addr;
-    struct sockaddr_in cli_addrs[MAX_PLAYERS];
+    struct sockaddr_in cli_addrs[max_players];
     int connected_clients;
 
     // Zero out Server data
@@ -317,7 +321,7 @@ int main() {
     memset(&udp_sock, '\0', sizeof(udp_sock));
     memset(&connected_clients, '\0', sizeof(connected_clients));
 
-    for (int i = 0; i < MAX_PLAYERS; i++) {
+    for (int i = 0; i < max_players; i++) {
         memset(&cli_addrs[i], '\0', sizeof(cli_addrs[i]));
     }
 
@@ -349,12 +353,12 @@ int main() {
     //test_connection(udp_sock, (struct sockaddr*) &cli_addr, sizeof(cli_addr));
 
     // Accept Clients until all game slots are full
-    connected_clients = 1;
-    for (int i = 0; i < MAX_PLAYERS; i++) {
+    connected_clients = 0;
+    for (int i = 0; i < max_players; i++) {
         fprintf(stdout, "\n---\nCreating Client #%d", connected_clients);
         setup_connections(udp_sock, (struct sockaddr*) &cli_addrs[i], sizeof(cli_addrs[i]), &connected_clients);
         connected_clients++;
     }
 
-    play_hangman(udp_sock, cli_addrs, sizeof(struct sockaddr));
+    play_hangman(udp_sock, cli_addrs, sizeof(struct sockaddr), &connected_clients);
 }
