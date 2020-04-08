@@ -11,12 +11,12 @@
 
 
 /**
- * play_hangman() function is used to handle playing the Networked
+ * play_hangman() function is used to handle serving the Networked
  *  Hangman game.
- *  ToDo: Fill this function out
- * @param sock      - The Server socket to Send/Receive to/from
- * @param cli_addrs - The addresses of the remote Clients
- * @param cli_len   - The length of the Client Address Structure
+ * @param sock              - The Server socket to Send/Receive to/from
+ * @param cli_addrs         - The address(es) of the remote Client(s)
+ * @param cli_len           - The length of the Client Address Structure
+ * @param connected_clients - The number of connected Clients
  */
 void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, const int* connected_clients) {
     fprintf(stdout, "\n---\nPlaying Hangman\n");
@@ -250,6 +250,7 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
  * @param sock      - The Client socket to Send/Receive to/from
  * @param cli_addr  - The address of the remote Client
  * @param cli_len   - The length of the Client Address Structure
+ * @param cli_count - The numerical identifier for this Client
  */
 void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, const int* cli_count) {
     ssize_t count;
@@ -306,11 +307,15 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
  * main() function is the main runtime function of the UDP Server.
  *  It gathers several Clients and launches the Server for the Networked
  *  Hangman game.
- * @return
+ * @param argc  - The count of cmdline arguments
+ * @param argv  - The cmdline arguments, the number of Clients to
+ *  connect in this case.
+ * @return      - Exit Status
  */
 int main(int argc, char* argv[]) {
-    int udp_sock;
+    // Set the `max_players` to the cmdline option, or MAX_PLAYERS
     int max_players = (argc == 2) ? (int) strtol(argv[1], NULL, 10) : MAX_PLAYERS;
+    int udp_sock;
     struct sockaddr_in serv_addr;
     struct sockaddr_in cli_addrs[max_players];
     int connected_clients;
@@ -347,9 +352,10 @@ int main(int argc, char* argv[]) {
     }
     fprintf(stdout, "UDP Server Socket Created\n");
 
-    // Handle connections
+    // Test connections (DEBUG FUNCTION)
     //test_connection(udp_sock, (struct sockaddr*) &cli_addr, sizeof(cli_addr));
 
+    // Handle connections
     // Accept Clients until all game slots are full
     connected_clients = 0;
     for (int i = 0; i < max_players; i++) {

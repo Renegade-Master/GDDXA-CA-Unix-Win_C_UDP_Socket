@@ -11,6 +11,7 @@
 #define HANGMAN_DATATYPES_SERVER_H
 
 #include <stdbool.h>
+#include <time.h>
 
 char* word[] = {
 #include "../rsc/words"
@@ -23,5 +24,6 @@ enum Game_State {
 #define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
 #define MAX_PLAYERS 2
 #define MAX_LIVES 10
+#define MAX_TOTAL_LEN 120
 
 #endif //HANGMAN_DATATYPES_SERVER_H
