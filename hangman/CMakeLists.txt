@@ -1,8 +1,20 @@
+# Set the minimum required version of CMAKE
 cmake_minimum_required(VERSION 3.14)
-project(hangman C)
 
-set(CMAKE_C_STANDARD 99)
+# Set the Project Name
+project(HANGMAN_C)
 
+# Set the compiler to GNU99
+set_property(TARGET PROPERTY C_STANDARD GNU99)
+
+# Set the desired Compile Flags
+set(GCC_COMPILE_FLAGS
+        -Wall                   # Enable "All" Warnings
+        -Wextra                 # Enable "Extra" Warnings not covered by "All"
+        -Werror                 # All Warnings are treated as Errors
+        -D_FORTIFY_SOURCE=1)    # Enable Bound Checking of Memory Sensitive Operations
+
+# Add the ROOT Directory
 include_directories(.)
 
 # ToDo: Rename the source files as we add new ones.

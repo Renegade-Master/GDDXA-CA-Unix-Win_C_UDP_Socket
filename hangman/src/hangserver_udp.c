@@ -22,38 +22,40 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
     fprintf(stdout, "\n---\nPlaying Hangman\n");
 
     // Set up the game
-    int count;
+    ssize_t count;
     char* whole_word,
-            part_word[MAXLEN],
-            outbuf[MAXLEN];
+            part_word[MAX_LEN],
+            outbuf[MAX_TOTAL_LEN];
     bool good_guess;
     size_t word_length;
-    char hostname[MAXLEN];
+    char hostname[MAX_LEN];
     char guess[2];
-    int lives = MAXLIVES;
+    int lives;
     int clients_in_play = (sizeof(&cli_addrs) / sizeof(cli_len));
     enum Game_State game_state = IN_PROGRESS;
 
     // Zero out all data before starting
-    bzero(&count, sizeof(count));
-    bzero(&whole_word, sizeof(whole_word));
-    bzero(&part_word, sizeof(part_word));
-    bzero(&outbuf, sizeof(outbuf));
-    bzero(&guess, sizeof(guess));
-    bzero(&good_guess, sizeof(good_guess));
-    bzero(&word_length, sizeof(word_length));
-    bzero(&hostname, sizeof(hostname));
+    memset(&count, '\0', sizeof(count));
+    memset(&whole_word, '\0', sizeof(whole_word));
+    memset(&part_word, '\0', sizeof(part_word));
+    memset(&outbuf, '\0', sizeof(outbuf));
+    memset(&guess, '\0', sizeof(guess));
+    memset(&lives, '\0', sizeof(lives));
+    memset(&good_guess, '\0', sizeof(good_guess));
+    memset(&word_length, '\0', sizeof(word_length));
+    memset(&hostname, '\0', sizeof(hostname));
 
     fprintf(stdout, "\nThere are %d Clients in play\n", clients_in_play);
 
     // Pick a word at random from the list
     whole_word = word[rand() % NUM_OF_WORDS]; // NOLINT
-    // `NOLINT` prevents linter from complaining.  `rand()` is a necessary evil
+        // `NOLINT` prevents linter from complaining.  `rand()` is a necessary evil
     word_length = strlen(whole_word);
+    lives = MAX_LIVES;
     fprintf(stdout, "\nServer chose hangman word %s", whole_word);
 
     // Ensure no letters are guessed Initially
-    for (int j = 0; j < word_length; j++) {
+    for (int j = 0; j < (int) word_length; j++) {
         part_word[j] = '-';
     }
 
@@ -63,7 +65,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
     fprintf(stdout, "\nWordPart: %s", part_word);
 
     // Get the Human Readable name of this host
-    gethostname(hostname, MAXLEN);
+    gethostname(hostname, MAX_LEN);
 
     // Client currently being handled
     struct sockaddr* cli_addr = NULL;
@@ -73,7 +75,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
         // Set the current Client
         cli_addr = (struct sockaddr*) &cli_addrs[i];
 
-        bzero(&outbuf, sizeof(outbuf));
+        memset(&outbuf, '\0', sizeof(outbuf));
         sprintf(outbuf, "%s", hostname);
         sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
@@ -83,8 +85,8 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
             exit(4); // Error Condition 04
         }
 
-        bzero(&outbuf, sizeof(outbuf));
-        sprintf(outbuf, "%s %d", part_word, lives);
+        memset(&outbuf, '\0', sizeof(outbuf));
+        snprintf(outbuf, MAX_TOTAL_LEN, "%s %u", part_word, (unsigned short) lives);
         sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
         // Check that there were no errors with sending the data
@@ -96,6 +98,8 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
 
     // Loop until the game is WON
     while (game_state == IN_PROGRESS) {
+        good_guess = false;
+
         // Loop for each Client
         for (int i = 0; i < clients_in_play; i++) {
             fprintf(stdout, "\nServing Client %d", i);
@@ -104,7 +108,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
             cli_addr = (struct sockaddr*) &cli_addrs[i];
 
             // Inform the Client that it's their turn
-            bzero(&outbuf, sizeof(outbuf));
+            memset(&outbuf, '\0', sizeof(outbuf));
             sprintf(outbuf, "%d", (i + 1));
             sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
@@ -115,8 +119,8 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
             }
 
             // Send the current state of the game to the Client
-            bzero(&outbuf, sizeof(outbuf));
-            sprintf(outbuf, "%s %d", part_word, lives);
+            memset(&outbuf, '\0', sizeof(outbuf));
+            snprintf(outbuf, MAX_TOTAL_LEN, "%s %hu", part_word, (unsigned short) lives);
             sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
             // Check that there were no errors with sending the data
@@ -126,7 +130,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
             }
 
             // Get a letter from player guess
-            count = recvfrom(sock, guess, MAXLEN, 0, cli_addr, &cli_len);
+            count = recvfrom(sock, guess, MAX_LEN, 0, cli_addr, &cli_len);
 
             // Check the received data for errors
             if (count < 0) {
@@ -135,8 +139,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
             }
 
             // Evaluate the Client's guess
-            good_guess = false;
-            for (int j = 0; j < word_length; j++) {
+            for (int j = 0; j < (int) word_length; j++) {
                 if (guess[0] == whole_word[j]) {
                     good_guess = true;
                     part_word[j] = whole_word[j];
@@ -144,14 +147,16 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
             }
 
             // If the guess was bad, subtract from the Lives counter
-            if (!good_guess) { lives--; }
+            if (!good_guess) {
+                lives--;
+            }
 
             // If the whole word has been guessed
             if (strcmp(whole_word, part_word) == 0) {
                 game_state = WON; // User Won
 
                 // Let the Client(s) know they WON
-                bzero(&outbuf, sizeof(outbuf));
+                memset(&outbuf, '\0', sizeof(outbuf));
                 sprintf(outbuf, "%s", "#GAMEOVER");
                 sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
@@ -165,7 +170,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
                 game_state = LOST; // User Lost
 
                 // Let the Client(s) know they LOST
-                bzero(&outbuf, sizeof(outbuf));
+                memset(&outbuf, '\0', sizeof(outbuf));
                 sprintf(outbuf, "%s", "#GAMEOVER");
                 sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
 
@@ -204,17 +209,17 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len) {
  * @param cli_len   - The length of the Client Address Structure
  */
 void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
-    int count;
-    char i_line[MAXLEN];
+    ssize_t count;
+    char i_line[MAX_LEN];
 
     fprintf(stdout, "Testing Connection\n");
 
     do {
-        bzero(&i_line, sizeof(i_line));
+        memset(&i_line, '\0', sizeof(i_line));
         fprintf(stdout, "---\nAwaiting data on Socket %d...\n\n", sock);
 
         // Receive data from the Client Socket
-        count = recvfrom(sock, i_line, MAXLEN, 0, cli_addr, &cli_len);
+        count = recvfrom(sock, i_line, MAX_LEN, 0, cli_addr, &cli_len);
         i_line[count] = '\0';
 
         // Check the received data for errors
@@ -227,7 +232,7 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
         fprintf(stdout, "Messg Received: %s", i_line);
 
         // Send data to the Client Socket
-        count = sendto(sock, i_line, count, 0, cli_addr, cli_len);
+        count = sendto(sock, i_line, MAX_LEN, 0, cli_addr, cli_len);
 
         // Check that there were no errors with sending the data
         if (count < 0) {
@@ -248,21 +253,21 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
  * @param cli_len   - The length of the Client Address Structure
  */
 void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, const int* cli_count) {
-    int count;
-    char id_request[IDLEN];
-    char id_response[IDLEN];
+    ssize_t count;
+    char id_request[ID_LEN];
+    char id_response[ID_LEN];
 
     // Zero out data
-    bzero(&count, sizeof(count));
-    bzero(&id_request, sizeof(id_request));
-    bzero(&id_response, sizeof(id_response));
-    bzero(cli_addr, sizeof(cli_len));
+    memset(&count, '\0', sizeof(count));
+    memset(&id_request, '\0', sizeof(id_request));
+    memset(&id_response, '\0', sizeof(id_response));
+    memset(cli_addr, '\0', sizeof(cli_len));
 
     fprintf(stdout, "\nSetting Up New Client\n");
     fprintf(stdout, "\nAwaiting request on Socket %d...\n", sock);
 
     // Receive data from the Client Socket
-    count = recvfrom(sock, id_request, IDLEN, 0, cli_addr, &cli_len);
+    count = recvfrom(sock, id_request, ID_LEN, 0, cli_addr, &cli_len);
 
     // Check the received data for errors
     if (count < 0) {
@@ -282,7 +287,7 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
     }
 
     // Send data to the Client Socket
-    count = sendto(sock, id_response, IDLEN, 0, (struct sockaddr*) cli_addr, cli_len);
+    count = sendto(sock, id_response, ID_LEN, 0, cli_addr, cli_len);
 
     // Check that there were no errors with sending the data
     if (count < 0) {
@@ -304,21 +309,21 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
 int main() {
     int udp_sock;
     struct sockaddr_in serv_addr;
-    struct sockaddr_in cli_addrs[MAXPLAYERS];
+    struct sockaddr_in cli_addrs[MAX_PLAYERS];
     int connected_clients;
 
     // Zero out Server data
-    bzero(&serv_addr, sizeof(serv_addr));
-    bzero(&udp_sock, sizeof(udp_sock));
-    bzero(&connected_clients, sizeof(connected_clients));
+    memset(&serv_addr, '\0', sizeof(serv_addr));
+    memset(&udp_sock, '\0', sizeof(udp_sock));
+    memset(&connected_clients, '\0', sizeof(connected_clients));
 
-    for (int i = 0; i < MAXPLAYERS; i++) {
-        bzero(&cli_addrs[i], sizeof(cli_addrs[i]));
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        memset(&cli_addrs[i], '\0', sizeof(cli_addrs[i]));
     }
 
     // Seed the random number generator
     struct timespec tp;
-    srand((int) clock_gettime(CLOCK_MONOTONIC, &tp));
+    srand((unsigned int) clock_gettime(CLOCK_MONOTONIC, &tp));
 
     // Create the UDP Socket
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP
@@ -345,7 +350,7 @@ int main() {
 
     // Accept Clients until all game slots are full
     connected_clients = 1;
-    for (int i = 0; i < MAXPLAYERS; i++) {
+    for (int i = 0; i < MAX_PLAYERS; i++) {
         fprintf(stdout, "\n---\nCreating Client #%d", connected_clients);
         setup_connections(udp_sock, (struct sockaddr*) &cli_addrs[i], sizeof(cli_addrs[i]), &connected_clients);
         connected_clients++;
