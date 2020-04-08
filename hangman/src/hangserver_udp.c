@@ -48,8 +48,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, co
     fprintf(stdout, "\nThere are %d Clients in play\n", clients_in_play);
 
     // Pick a word at random from the list
-    whole_word = word[rand() % NUM_OF_WORDS]; // NOLINT
-        // `NOLINT` prevents linter from complaining.  `rand()` is a necessary evil
+    whole_word = word[random() % NUM_OF_WORDS];
     word_length = strlen(whole_word);
     lives = MAX_LIVES;
     fprintf(stdout, "\nServer chose hangman word %s", whole_word);
@@ -326,8 +325,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Seed the random number generator
-    struct timespec tp;
-    srand((unsigned int) clock_gettime(CLOCK_MONOTONIC, &tp));
+    srandom((unsigned int) time(NULL));
 
     // Create the UDP Socket
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP
