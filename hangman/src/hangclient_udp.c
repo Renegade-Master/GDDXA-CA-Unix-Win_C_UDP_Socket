@@ -15,29 +15,29 @@
  *  Hangman game.
  *  ToDo: Fill this function out
  */
-void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[IDLEN]) {
-    int count;
+void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[ID_LEN]) {
+    ssize_t count;
     int round_local;
-    char hostname[MAXLEN];
-    char i_line[MAXLEN];
-    char o_guess[GUESSLEN];
-    char temp_guess[GUESSLEN];
+    char hostname[MAX_LEN];
+    char i_line[MAX_LEN];
+    char o_guess[GUESS_LEN];
+    char temp_guess[GUESS_LEN];
 
     // Zero out all data before starting
-    bzero(&count, sizeof(count));
-    bzero(&round_local, sizeof(round_local));
-    bzero(&hostname, sizeof(hostname));
-    bzero(&i_line, sizeof(i_line));
-    bzero(&o_guess, sizeof(o_guess));
-    bzero(&temp_guess, sizeof(temp_guess));
+    memset(&count, '\0', sizeof(count));
+    memset(&round_local, '\0', sizeof(round_local));
+    memset(&hostname, '\0', sizeof(hostname));
+    memset(&i_line, '\0', sizeof(i_line));
+    memset(&o_guess, '\0', sizeof(o_guess));
+    memset(&temp_guess, '\0', sizeof(temp_guess));
 
     // Get the Human Readable name of this host
-    gethostname(hostname, MAXLEN);
+    gethostname(hostname, MAX_LEN);
 
     fprintf(stdout, "Playing Hangman as Client #%s on [%s]\n", cli_id, hostname);
 
     // Receive the Hostname of the Server
-    count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
+    count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr, &serv_len);
 
     // Check the received data for errors
     if (count < 0) {
@@ -48,8 +48,8 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
     fprintf(stdout, "Connected to Server: %s\n", i_line);
 
     // Receive the initial game state
-    bzero(&i_line, sizeof(i_line));
-    count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
+    memset(&i_line, '\0', sizeof(i_line));
+    count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr, &serv_len);
 
     // Check the received data for errors
     if (count < 0) {
@@ -57,15 +57,14 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
         exit(4); // Error Condition 04
     }
 
-    fprintf(stdout, "\nGame State: %s", i_line);
+    fprintf(stdout, "\nInitial Game State:%s", i_line);
 
     // Play the game
     do {
-        // Wait your turn
         do {
             // Receive the current turn from the Server
-            bzero(&i_line, sizeof(i_line));
-            count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
+            memset(&i_line, '\0', sizeof(i_line));
+            count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr, &serv_len);
 
             // Check the received data for errors
             if (count < 0) {
@@ -73,16 +72,14 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
                 exit(4); // Error Condition 04
             }
 
-            fprintf(stdout, "\nDoes [%s] == [%s]", i_line, cli_id);
-
             if (strcmp(i_line, "#GAMEOVER\0") == 0) { exit(0); }
         } while (strcmp(i_line, cli_id) != 0);
 
         fprintf(stdout, "\n---\nRound: %d", ++round_local);
 
         // Receive the current game state
-        bzero(&i_line, sizeof(i_line));
-        count = recvfrom(sock, i_line, MAXLEN, 0, serv_addr, &serv_len);
+        memset(&i_line, '\0', sizeof(i_line));
+        count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr, &serv_len);
 
         // Check the received data for errors
         if (count < 0) {
@@ -90,18 +87,30 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
             exit(4); // Error Condition 04
         }
 
-        fprintf(stdout, "\nGame State: %s", i_line);
+        fprintf(stdout, "\nGame State:%s", i_line);
+        memset(&i_line, '\0', sizeof(i_line));
 
         // Securely retrieve data from the User
-        fprintf(stdout, "\nGuess a Letter\n>>");
-        temp_guess[0] = (char) fgetc(stdin);
-        strlcat(temp_guess, "\0", GUESSLEN);
-        strlcpy(o_guess, temp_guess, GUESSLEN);
+        memset(&temp_guess, '\0', sizeof(temp_guess));
 
+        // Don't allow bad characters
+        while (!isalpha((unsigned) temp_guess[0])) { // NOLINT (Bug in CLion)
+            fprintf(stdout, "\nGuess a LETTER [a-z]\n>>");
+            temp_guess[0] = (char) fgetc(stdin);
+        }
+
+        // Convert the letter to lowercase
+        temp_guess[0] = tolower(temp_guess[0]);
+
+        // Terminate the String and prepare it for sending
+        strncat(temp_guess, "\0", GUESS_LEN);
+        strncpy(o_guess, temp_guess, GUESS_LEN);
+
+        // Show the User what they typed
         fprintf(stdout, "Guess was: %s", o_guess);
 
         // Send the data to the Server
-        count = sendto(sock, o_guess, GUESSLEN, 0, serv_addr, serv_len);
+        count = sendto(sock, o_guess, GUESS_LEN, 0, serv_addr, serv_len);
 
         // Check the sent data for errors
         if (count < 0) {
@@ -121,25 +130,25 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
  * @param serv_len   - The length of the Server Address Structure
  */
 void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
-    int count;
-    char i_line[MAXLEN + 1];
-    char o_line[MAXLEN];
+    ssize_t count;
+    char i_line[MAX_LEN + 1];
+    char o_line[MAX_LEN];
 
     // Zero the data out
-    bzero(&i_line, sizeof(i_line));
-    bzero(&o_line, sizeof(o_line));
+    memset(&i_line, '\0', sizeof(i_line));
+    memset(&o_line, '\0', sizeof(o_line));
 
     fprintf(stdout, "Testing Connection\n");
 
     fprintf(stdout, ">>");
-    while (fgets(o_line, MAXLEN, stdin) != NULL) {
+    while (fgets(o_line, MAX_LEN, stdin) != NULL) {
         fprintf(stdout, "Sending: %s\n", o_line);
 
         // Send the data to the Server
         sendto(sock, o_line, strlen(o_line), 0, serv_addr, serv_len);
 
         // Receive a reply from the Server
-        count = recvfrom(sock, i_line, MAXLEN, 0, NULL, NULL);
+        count = recvfrom(sock, i_line, MAX_LEN, 0, NULL, NULL);
 
         // Check the received data for errors
         if (count < 0) {
@@ -150,8 +159,8 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
         i_line[count] = 0;
         fprintf(stdout, "Received: %s\n---\n", i_line);
 
-        bzero(&i_line, sizeof(i_line));
-        bzero(&o_line, sizeof(o_line));
+        memset(&i_line, '\0', sizeof(i_line));
+        memset(&o_line, '\0', sizeof(o_line));
 
         fprintf(stdout, "\n>>");
     }
@@ -167,21 +176,21 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
  * @param serv_len
  */
 void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
-    int count;
-    char id_request[IDLEN + 1];
-    char id_response[IDLEN];
+    ssize_t count;
+    char id_request[ID_LEN + 1];
+    char id_response[ID_LEN];
 
     // Zero the data out
-    bzero(&id_request, sizeof(id_request));
-    bzero(&id_response, sizeof(id_response));
+    memset(&id_request, '\0', sizeof(id_request));
+    memset(&id_response, '\0', sizeof(id_response));
 
     // Assign request character
-    strlcpy(id_request, "-1", IDLEN);
+    strncpy(id_request, "-1", ID_LEN);
 
     fprintf(stdout, "Sending: %s\n", id_request);
 
     // Send the data to the Server
-    count = sendto(sock, id_request, IDLEN, 0, serv_addr, serv_len);
+    count = sendto(sock, id_request, ID_LEN, 0, serv_addr, serv_len);
 
     // Check the sent data for errors
     if (count < 0) {
@@ -190,7 +199,7 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
     }
 
     // Receive a reply from the Server
-    count = recvfrom(sock, id_response, IDLEN, 0, serv_addr, &serv_len);
+    count = recvfrom(sock, id_response, ID_LEN, 0, serv_addr, &serv_len);
 
     // Check the received data for errors
     if (count < 0) {
@@ -200,7 +209,7 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
 
     fprintf(stdout, "Received: %s\n---\n", id_response);
 
-    bzero(&id_request, sizeof(id_request));
+    memset(&id_request, '\0', sizeof(id_request));
 
     play_hangman(sock, (struct sockaddr*) &serv_addr, sizeof(*serv_addr), id_response);
 }
@@ -222,7 +231,7 @@ int main(int argc, char* argv[]) {
 
     // Seed the random number generator
     struct timespec tp;
-    srand((int) clock_gettime(CLOCK_MONOTONIC, &tp));
+    srand((unsigned int) clock_gettime(CLOCK_MONOTONIC, &tp));
 
     server_name = (argc == 2) ? argv[1] : "localhost";
 
@@ -232,9 +241,9 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    bzero(&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = host_info->h_addrtype;
-    memcpy((char*) &serv_addr.sin_addr, host_info->h_addr, host_info->h_length);
+    memset(&serv_addr, '\0', sizeof(serv_addr));
+    serv_addr.sin_family = (sa_family_t) host_info->h_addrtype;
+    memcpy((char*) &serv_addr.sin_addr, host_info->h_addr, (size_t) host_info->h_length);
     serv_addr.sin_port = htons(HANGMAN_UDP_PORT);
 
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP

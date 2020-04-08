@@ -21,7 +21,7 @@ enum Game_State {
 };
 
 #define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
-#define MAXPLAYERS 2
-#define MAXLIVES 10
+#define MAX_PLAYERS 2
+#define MAX_LIVES 10
 
 #endif //HANGMAN_DATATYPES_SERVER_H

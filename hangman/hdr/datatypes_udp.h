@@ -11,6 +11,6 @@
 #define HANGMAN_DATATYPES_UDP_H
 
 #define HANGMAN_UDP_PORT 1337
-#define IDLEN 3
+#define ID_LEN 3
 
 #endif //HANGMAN_DATATYPES_UDP_H

@@ -19,6 +19,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define MAXLEN 80
+#define MAX_LEN 80
+#define MAX_TOTAL_LEN 96
 
 #endif //HANGMAN_DATATYPES_ALL_H

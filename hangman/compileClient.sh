@@ -14,4 +14,4 @@ if [ -e bin/hangmanClient ]; then
 fi
 
 # Compile the binary, with WARNINGS replaced with ERRORS
-gcc src/hangclient.c -o bin/hangmanClient -std=gnu99 -Werror
+gcc src/hangclient.c -o bin/hangmanClient -std=gnu99 -Wall -Wextra -Werror -D_FORTIFY_SOURCE=1
