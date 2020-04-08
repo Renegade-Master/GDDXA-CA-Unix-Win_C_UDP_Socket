@@ -14,5 +14,5 @@ if [ -e bin/hangmanServer_Fork ]; then
 fi
 
 # Compile the binary, with WARNINGS replaced with ERRORS
-gcc src/hangserver_Fork.c -o bin/hangmanServer_Fork -std=gnu99 -Werror
+gcc src/hangserver_Fork.c -o bin/hangmanServer_Fork -std=gnu99 -Wall -Wextra -Werror -D_FORTIFY_SOURCE=1
 

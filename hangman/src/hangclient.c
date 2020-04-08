@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
     server.sin_family = host_info->h_addrtype;
     memcpy((char*) &server.sin_addr, host_info->h_addr, host_info->h_length);
-    server.sin_port = htons(HANGMAN_TCP_GENERIC_PORT);
+    server.sin_port = htons(HANGMAN_TCP_PORT);
 
     if (connect(sock, (struct sockaddr*) &server, sizeof server) < 0) {
         perror("connecting to server");
