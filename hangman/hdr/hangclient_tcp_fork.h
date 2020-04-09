@@ -15,7 +15,7 @@
 #include "datatypes_tcp.h"
 
 
-void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[MAXPLAYERS]);
+void play_hangman(int , struct sockaddr*, socklen_t , char);
 
 void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len);
 

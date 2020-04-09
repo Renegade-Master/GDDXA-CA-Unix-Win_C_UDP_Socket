@@ -10,9 +10,6 @@
 #include "../hdr/hangserver_tcp_fork.h"
 
 
-extern time_t time();
-
-
 
 
 /**
