@@ -228,28 +228,44 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
  */
 int main(int argc, char* argv[]) {
     int udp_sock;
-    struct sockaddr_in serv_addr;
-    struct hostent* host_info;
+    struct addrinfo hints;
+    struct addrinfo* serv_info;
+    struct addrinfo* next_serv_info;
+    struct sockaddr_storage serv_addr;
     char* server_name;
+    char server_port[6];
+
+    memset(&udp_sock, '\0', sizeof(udp_sock));
+    memset(&hints, '\0', sizeof(hints));
+    memset(&serv_addr, '\0', sizeof(serv_addr));
+    memset(&server_name, '\0', sizeof(server_name));
+    memset(&server_port, '\0', sizeof(server_port));
 
     // Set the Server address to the cmdline option, or LOCALHOST
-    server_name = (argc == 2) ? argv[1] : "localhost";
+    server_name = (argc == 2) ? argv[1] : "::1";
+    sprintf(server_port, "%d", HANGMAN_UDP_PORT);
 
     // Convert the IP Address to a Human-Readable format
-    host_info = gethostbyname(server_name);
-    if (host_info == NULL) {
-        perror("Unknown Host\n");
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    // Build the Server Address Structure
+    if (getaddrinfo(server_name, server_port, &hints, &serv_info) != 0) {
+        perror("getaddrinfo() failed\n");
         exit(1);
     }
 
-    // Build up the Server Address Structure
-    memset(&serv_addr, '\0', sizeof(serv_addr));
-    serv_addr.sin_family = (sa_family_t) host_info->h_addrtype;
-    memcpy((char*) &serv_addr.sin_addr, host_info->h_addr, (size_t) host_info->h_length);
-    serv_addr.sin_port = htons(HANGMAN_UDP_PORT);
+    // Attempt to create the Local Socket
+    for(next_serv_info = serv_info; next_serv_info != NULL; next_serv_info = next_serv_info->ai_next) {
+        if((udp_sock = socket(next_serv_info->ai_family, next_serv_info->ai_socktype, next_serv_info->ai_protocol)) < 0) {
+            perror("Bad Result\n");
+            continue;
+        }
 
-    // Create the local Socket
-    udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP
+        // Found a suitable address
+        serv_info = next_serv_info;
+        break;
+    }
 
     // Error check The Socket
     if (udp_sock < 0) {
@@ -260,5 +276,12 @@ int main(int argc, char* argv[]) {
     fprintf(stdout, "UDP Client Socket Created\n");
 
     //test_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
-    setup_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
+    // setup_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
+    setup_connection(udp_sock, (struct sockaddr*) serv_info->ai_addr, sizeof(serv_info->ai_addrlen));
+
+    // Tidy up the Socket and close the program
+    freeaddrinfo(serv_info);
+    close(udp_sock);
+
+    return(0);
 }

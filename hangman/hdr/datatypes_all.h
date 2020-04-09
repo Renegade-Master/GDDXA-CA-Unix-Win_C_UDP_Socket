@@ -10,6 +10,7 @@
 #ifndef HANGMAN_DATATYPES_ALL_H
 #define HANGMAN_DATATYPES_ALL_H
 
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,5 +18,6 @@
 #include <unistd.h>
 
 #define MAX_LEN 80
+#define GUESS_LEN 2
 
 #endif //HANGMAN_DATATYPES_ALL_H

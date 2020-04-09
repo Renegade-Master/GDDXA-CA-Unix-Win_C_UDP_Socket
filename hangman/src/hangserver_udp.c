@@ -29,7 +29,7 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, co
     bool good_guess;
     size_t word_length;
     char hostname[MAX_LEN];
-    char guess[2];
+    char guess[GUESS_LEN];
     int lives;
     int clients_in_play = *connected_clients;
     enum Game_State game_state = IN_PROGRESS;
