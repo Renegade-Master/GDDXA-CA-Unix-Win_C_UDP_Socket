@@ -80,7 +80,7 @@ int test(int sock){
     while(1) {
         memset(&buffer, '\0', sizeof(buffer));
 
-        printf("\nWaiting for Message: ");
+        printf("\nSocket: %d, Waiting for Message: ",sock);
         count = read(sock, buffer, sizeof(buffer));
 
         if(count<=0){
@@ -132,25 +132,29 @@ int main() {
         client_len = sizeof(client[0]);
         printf("\n---\nAccepting?\n\n");
         ssock = accept(sock,(struct sockaddr *)&server,(socklen_t *)&client_len);
+
+        printf("Sock: %d produced child ssock: %d",sock,ssock);
         if(ssock < 0){
             perror("Accept Failed \n---\n");
             printf("Failure\n---\n");
         }
         else{
-            perror("Accept Succeeded \n---\n");
+            perror("Accept Succeeded\n---\n");
         }
 
 
         switch(fork()){
             case 0: //Child
+                printf("\n---\nForked new Child Process");
                 close(sock);
-                exit(test(ssock));
+                test(ssock);
                 break;
             default:
+                printf("Failed to Fork new Child Process\n---\n");
                 close(ssock);
                 break;
         }
-        test(ssock);
+        //test(ssock);
         // Run Hangman
         (void) close(ssock);
     }
