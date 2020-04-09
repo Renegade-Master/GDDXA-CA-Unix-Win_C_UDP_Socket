@@ -2,7 +2,7 @@
 // Created by Rory Ryan on 09/04/2020.
 //
 
-#include "hdr/hangclient_fork.h"
+#include "../hdr/hangclient_fork.h"
 
 
 /**
@@ -13,23 +13,19 @@
  */
 int main(int argc, char* argv[]) {
     int sock, count;
-    //struct sockaddr_in serv_addr;
-    //struct hostent *server;
-
     char buffer[256];
 
-    if (argc < 3) {
-        fprintf(stderr,"usage %s hostname port\n", argv[0]);
-        exit(0);
-    }
+    char *server = (argc == 1) ? argv[1] : "localhost";
+    char *service = (argc == 3) ? argv[2] : "1168";
 
-    char * service = argv[2];
-    char * server = argv[1];
-
+    printf("\n---\nPassivetTCPClient(server: %s, service: %s)\n---\n",server,service);
     // Create a connected TCP socket
     sock = PassiveTCPClient(server, service);
-    if (sock < 0)
-        DieWithUserMessage("SetupTCPClientSocket() failed", "unable to connect");
+    if (sock < 0){
+        perror("\nSetupTCPClientSocket() failed");
+        exit(1);
+    }
+
 
 
     printf("Please enter the message: ");
@@ -75,17 +71,22 @@ int PassiveTCPClient(const char *server,const char *service){
     // Get address(es)
     struct addrinfo *servAddr; // Holder for returned list of server addrs
     int rtnVal = getaddrinfo(server, service, &addrCriteria, &servAddr);
-    if (rtnVal != 0)
-        DieWithUserMessage("getaddrinfo() failed", gai_strerror(rtnVal));
+    if (rtnVal != 0) {
+        perror("GetAddrInfo() Failed: ");
+        exit(2);
+    }
 
     int sock = -1;
     for (struct addrinfo *addr = servAddr; addr != NULL; addr = addr->ai_next) {
-
+        printf("\n---\nTesting:\n\nsock = socket(addr->ai_family: %d, addr->ai_socktype: %d, addr->ai_protocol: %d)\n\n"
+                ,addr->ai_family,addr->ai_socktype,addr->ai_protocol);
         sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
         if (sock < 0){  //Failed
+            perror("\nSocket Failed\n");
             continue;
         }
 
+        printf("connect(sock: %d, addr->ai_addr: %d, addr->ai_addrlen: %d)\n---\n",sock,addr->ai_addr,addr->ai_addrlen);
         // Establish the connection to the echo server
         if (connect(sock, addr->ai_addr, addr->ai_addrlen) == 0){   //Success
             break;

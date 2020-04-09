@@ -11,8 +11,12 @@ extern time_t time();
 # define MAXLEN 80 // Maximum size in the word of any String
 int maxlives = 12;
 
-
-void testGameNoZombie(int in,int out){
+/**
+ *
+ * @param in
+ * @param out
+ */
+void testGameNoZombie(){
 
     printf("\n--Playing Test Connection--\n\n");
     while(1){
@@ -20,20 +24,29 @@ void testGameNoZombie(int in,int out){
     }
     exit(0);
 }
-
-void testGameZombie(int in,int out){
+/**
+ *
+ * @param in
+ * @param out
+ */
+void testGameZombie(){
 
     printf("\n--Playing Test Connection--\n\n");
 
     exit(0);
 }
 
-
+/**
+ *
+ * @param sock
+ * @param cli_adr
+ * @param cli_len
+ */
 void play_hangman(int sock,struct sockaddr* cli_adr,socklen_t cli_len) {
     fprintf(stdout, "\n--Playing Hangman--");
-    fprintf(stdout, "\n--sock: %s", sock);
-    fprintf(stdout, "\n--cli_addr", cli_adr);
-    fprintf(stdout, "\n--c0li_len", cli_len);
+    fprintf(stdout, "\n--sock: %d", sock);
+    fprintf(stdout, "\n--cli_addr: %d", cli_adr->sa_family);
+    fprintf(stdout, "\n--c0li_len: %d", cli_len);
     bool endGame = false;
     int count;
     char i_line[MAXLEN];
@@ -62,18 +75,33 @@ void play_hangman(int sock,struct sockaddr* cli_adr,socklen_t cli_len) {
     }while(!endGame);
 }
 int test(int sock){
-    while(1){}
+    int count;
+    char buffer[255];
+    while(1) {
+        memset(&buffer, '\0', sizeof(buffer));
+
+        printf("\nWaiting for Message: ");
+        count = read(sock, buffer, sizeof(buffer));
+
+        if(count<=0){
+            perror("\nRead operation failed");
+            exit(2);
+        }
+        printf("\n\nMessage Reads: %s",buffer);
+    }
 }
 
-
+/**
+ *
+ * @return
+ */
 int main() {
     printf("\nStarted");
     int	sock, ssock, fd, client_len, childProcCount, numOfClients;
     struct sockaddr_in server, client[MAXPLAYERS];
     char *service;
 
-    printf("\nZeroing");
-    //Zero out server data
+    printf("\n---\nZeroing");
     bzero(&server, sizeof(server));
     bzero(&sock, sizeof(sock));
     bzero(&ssock, sizeof(ssock));
@@ -83,15 +111,15 @@ int main() {
     bzero(&numOfClients,sizeof(numOfClients));
     bzero(&service,sizeof(service));
 
-    printf("\npost Zeroing");
+    printf("\n---\npost Zeroing\n---\n");
     for(int i = 0; i < MAXPLAYERS; i++) {
         bzero(&client[i], sizeof(client[i]));
     }
     service = "1168";
 
-    perror("\n---\nCreating Socket\n---\n");
+    perror("\n---\nCreating Socket\n\n");
     sock = passiveTCP(service,5);
-    perror("\n---\nCreated Socket\n---\n");
+    perror("\n---\nCreated Socket\n\n");
     (void) signal(SIGCHLD, reaper);
 
 
@@ -100,27 +128,16 @@ int main() {
         exit(1);
     }
 
-    /*server.sin_family      = AF_INET;
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
-    server.sin_port        = htons(HANGMAN_TCP_PORT);
-
-    if (bind(sock, (struct sockaddr*) &server, sizeof(server)) < 0) {
-        perror("\n--binding socket--");
-        exit(2);
-    }*/
-
-    //listen(sock, 5);
-    //childProcCount = 0;
     while (1) {
         client_len = sizeof(client[0]);
-        printf("\n---\nAccepting?\n---\n");
-        ssock = accept(sock,(struct sockaddr *)&server,&client_len);
+        printf("\n---\nAccepting?\n\n");
+        ssock = accept(sock,(struct sockaddr *)&server,(socklen_t *)&client_len);
         if(ssock < 0){
-            perror("Accept Failed \n");
-            printf("Failure");
+            perror("Accept Failed \n---\n");
+            printf("Failure\n---\n");
         }
         else{
-            perror("Accept Succeeded \n");
+            perror("Accept Succeeded \n---\n");
         }
 
 
@@ -133,58 +150,18 @@ int main() {
                 close(ssock);
                 break;
         }
-
+        test(ssock);
         // Run Hangman
         (void) close(ssock);
-        /*client_len = sizeof(client);
-	    //Accept Connection "FORK HERE!!"
-        if ((fd    = accept(sock, (struct sockaddr*) &client, &client_len)) < 0) {
-            perror("\n--Error accepting connection--");
-            exit(3);
-        }
-        pid_t pid = fork();
-
-		if(pid < 0){
-			perror("\n--Fork() Failed--");
-		}
-        if(pid==0){ //TODO Gamify with Hangman
-            perror("\n--Fork Connection Accepted--");
-            printf("%d is a socket\n", fd);
-            play_hangman(sock,(struct sockaddr*) &server, sizeof(server));
-			exit(0);
-        }*/
-
-        //Increment Child Tracker
-        //close(fd);
-        //childProcCount++;
-
-
-        //clean up zombies
-        /*while(childProcCount){
-            //Get Current State of processes
-            pid = waitpid((pid_t) -1 ,NULL,WNOHANG);
-            printf("%d is a socket\n", pid);
-
-
-            if(pid < 0){
-                perror("\n--waitpid() failed No Zombie Found--");
-            }
-            else if(pid ==0){
-                perror("\n--No Zombies, break--");
-                break;
-            }
-            else{
-                perror("\n--Zombie terminated--");
-                childProcCount--;
-            }
-        }*/
-
     }
 }
 
 
-//Find and Terminate Zombie Child Process'
-void reaper(int siq){
+/**
+ * Find and Terminate Zombie Child Process'
+ * @param siq
+ */
+void reaper(){
 
     int status;
     bzero(&status, sizeof(status));
@@ -203,15 +180,26 @@ void reaper(int siq){
 
 }
 
-//Passively Assign Socket Connection in TCP
+/**
+ * Passively Assign Socket Connection in TCP
+ * @param service
+ * @param qlen
+ * @return
+ */
 int passiveTCP(const char *service, int qlen){
-    printf("PassiveTCP");
+    printf("---\n\nPassiveTCP");
     return passivesock(service,"tcp",qlen);
 }
 
-//Allocate & bind server socket
+/**
+ * Allocate & bind server socket
+ * @param service
+ * @param transport
+ * @param qlen
+ * @return
+ */
 int passivesock(const char *service,const char *transport,int qlen) {
-    printf("PassiveSock");
+    printf("\n---\nPassiveSock");
     struct servent *pse;        //Pointer to service information entry;
     struct protoent *ppe;        //pointer to protocol information entry
     struct sockaddr_in sin;     //an internet endpoint address
@@ -223,7 +211,7 @@ int passivesock(const char *service,const char *transport,int qlen) {
 
 
     /* Map service name to port number */
-    if (pse = getservbyname(service, transport)) {
+    if ((pse = getservbyname(service, transport))) {
         sin.sin_port = htons(ntohs((u_short) pse->s_port) + portbase);
     }
     else if ((sin.sin_port = htons((u_short) atoi(service))) == 0) {
@@ -267,6 +255,12 @@ int passivesock(const char *service,const char *transport,int qlen) {
     return s;
 }
 
+/**
+ *
+ * @param format
+ * @param ...
+ * @return
+ */
 int errexit(const char *format, ...)
 {
     va_list args;
