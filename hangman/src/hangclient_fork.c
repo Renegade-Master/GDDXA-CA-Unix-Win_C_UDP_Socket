@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     int sock, count;
     char buffer[MAX_LEN];
 
-    char *server = (argc == 3) ? argv[1] : "localhost";
+    char *server = (argc >= 3) ? argv[1] : "localhost";
     char *service = (argc == 3) ? argv[2] : "1168";
 
     fprintf("\n---\nPassivetTCPClient(server: %s, service: %s)\n---\n",server,service);
