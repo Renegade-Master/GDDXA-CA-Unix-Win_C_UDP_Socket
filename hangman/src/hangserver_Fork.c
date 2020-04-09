@@ -7,9 +7,7 @@
 extern time_t time();
 
 
-# define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
-# define MAXLEN 80 // Maximum size in the word of any String
-int maxlives = 12;
+
 
 /**
  *
@@ -49,13 +47,13 @@ void play_hangman(int sock,struct sockaddr* cli_adr,socklen_t cli_len) {
     fprintf(stdout, "\n--c0li_len: %d", cli_len);
     bool endGame = false;
     int count;
-    char i_line[MAXLEN];
+    char i_line[MAX_LEN];
 
     //test Transmission from user
     do{
         //fprintf(stdout,"---\nAwaiting Data%d...\n\n", sock);
 
-        count = recv(sock,i_line,MAXLEN,0);
+        count = recv(sock,i_line,MAX_LEN,0);
         i_line[count]= '\0';
         //Did Message Receive Correctly
         if(count<0){
@@ -91,74 +89,6 @@ int test(int sock){
     }
 }
 
-/**
- *
- * @return
- */
-int main() {
-    printf("\nStarted");
-    int	sock, ssock, fd, client_len, childProcCount, numOfClients;
-    struct sockaddr_in server, client[MAXPLAYERS];
-    char *service;
-
-    printf("\n---\nZeroing");
-    memset(&server,'\0', sizeof(server));
-    memset(&sock,'\0', sizeof(sock));
-    memset(&ssock,'\0', sizeof(ssock));
-    memset(&fd,'\0', sizeof(fd));
-    memset(&client_len,'\0', sizeof(client_len));
-    memset(&childProcCount,'\0', sizeof(childProcCount));
-    memset(&numOfClients,'\0',sizeof(numOfClients));
-    memset(&service,'\0',sizeof(service));
-
-    printf("\n---\npost Zeroing\n---\n");
-    for(int i = 0; i < MAXPLAYERS; i++) {
-        memset(&client[i],'\0', sizeof(client[i]));
-    }
-    service = "1168";
-
-    perror("\n---\nCreating Socket\n\n");
-    sock = passiveTCP(service,5);
-    perror("\n---\nCreated Socket\n\n");
-    (void) signal(SIGCHLD, reaper);
-
-
-    if (sock < 0) { // This error checking is the code Stevens wraps in his Socket Function etc
-        perror("\n--creating stream socket--");
-        exit(1);
-    }
-
-    while (1) {
-        client_len = sizeof(client[0]);
-        printf("\n---\nAccepting?\n\n");
-        ssock = accept(sock,(struct sockaddr *)&server,(socklen_t *)&client_len);
-
-        printf("Sock: %d produced child ssock: %d",sock,ssock);
-        if(ssock < 0){
-            perror("Accept Failed \n---\n");
-            printf("Failure\n---\n");
-        }
-        else{
-            perror("Accept Succeeded\n---\n");
-        }
-
-
-        switch(fork()){
-            case 0: //Child
-                printf("\n---\nForked new Child Process");
-                close(sock);
-                test(ssock);
-                break;
-            default:
-                printf("Failed to Fork new Child Process\n---\n");
-                close(ssock);
-                break;
-        }
-        //test(ssock);
-        // Run Hangman
-        (void) close(ssock);
-    }
-}
 
 
 /**
@@ -204,6 +134,7 @@ int passiveTCP(const char *service, int qlen){
  */
 int passivesock(const char *service,const char *transport,int qlen) {
     printf("\n---\nPassiveSock");
+    u_short portbase = 0;
     struct servent *pse;        //Pointer to service information entry;
     struct protoent *ppe;        //pointer to protocol information entry
     struct sockaddr_in sin;     //an internet endpoint address
@@ -219,12 +150,12 @@ int passivesock(const char *service,const char *transport,int qlen) {
         sin.sin_port = htons(ntohs((u_short) pse->s_port) + portbase);
     }
     else if ((sin.sin_port = htons((u_short) atoi(service))) == 0) {
-        errexit("can't get \"%s\" service entry\n", service);
+        perror("Cant get service entry");
     }
 
     /* Map protocol name to protocol number */
     if ((ppe = getprotobyname(transport)) == 0) {
-        errexit("can't get \"%s\" protocol entry\n", transport);
+        perror("Cant get protocol entry");
     }
 
 
@@ -259,17 +190,73 @@ int passivesock(const char *service,const char *transport,int qlen) {
     return s;
 }
 
+
+
 /**
  *
- * @param format
- * @param ...
  * @return
  */
-int errexit(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-    exit(1);
+int main() {
+    printf("\nStarted");
+    int	sock, ssock, fd, client_len, childProcCount, numOfClients;
+    struct sockaddr_in server, client[MAXPLAYERS];
+    char *service;
+
+    printf("\n---\nZeroing");
+    memset(&server,'\0', sizeof(server));
+    memset(&sock,'\0', sizeof(sock));
+    memset(&ssock,'\0', sizeof(ssock));
+    memset(&fd,'\0', sizeof(fd));
+    memset(&client_len,'\0', sizeof(client_len));
+    memset(&childProcCount,'\0', sizeof(childProcCount));
+    memset(&numOfClients,'\0',sizeof(numOfClients));
+    memset(&service,'\0',sizeof(service));
+
+    printf("\n---\npost Zeroing\n---\n");
+    for(int i = 0; i < MAXPLAYERS; i++) {
+        memset(&client[i],'\0', sizeof(client[i]));
+    }
+    service = "1168";
+
+    perror("\n---\nCreating Socket\n\n");
+    sock = passiveTCP(service,5);
+    perror("\n---\nCreated Socket\n\n");
+    signal(SIGCHLD, reaper);
+
+
+    if (sock < 0) { // This error checking is the code Stevens wraps in his Socket Function etc
+        perror("\n--creating stream socket--");
+        exit(1);
+    }
+
+    while (1) {
+        client_len = sizeof(client[0]);
+        printf("\n---\nAccepting?\n\n");
+        ssock = accept(sock,(struct sockaddr *)&server,(socklen_t *)&client_len);
+
+        printf("Sock: %d produced child ssock: %d",sock,ssock);
+        if(ssock < 0){
+            perror("Accept Failed \n---\n");
+            printf("Failure\n---\n");
+        }
+        else{
+            perror("Accept Succeeded\n---\n");
+        }
+
+
+        switch(fork()){
+            case 0: //Child
+                printf("\n---\nForked new Child Process");
+                close(sock);
+                test(ssock);
+                break;
+            default:
+                printf("Failed to Fork new Child Process\n---\n");
+                close(ssock);
+                break;
+        }
+        //test(ssock);
+        // Run Hangman
+        (void) close(ssock);
+    }
 }

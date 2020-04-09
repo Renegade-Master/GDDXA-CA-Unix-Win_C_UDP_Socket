@@ -13,12 +13,12 @@
  */
 int main(int argc, char* argv[]) {
     int sock, count;
-    char buffer[256];
+    char buffer[MAX_LEN];
 
-    char *server = (argc == 1) ? argv[1] : "localhost";
+    char *server = (argc == 2) ? argv[1] : "localhost";
     char *service = (argc == 3) ? argv[2] : "1168";
 
-    printf("\n---\nPassivetTCPClient(server: %s, service: %s)\n---\n",server,service);
+    fprintf("\n---\nPassivetTCPClient(server: %s, service: %s)\n---\n",server,service);
     // Create a connected TCP socket
     sock = PassiveTCPClient(server, service);
     if (sock < 0){
@@ -29,8 +29,8 @@ int main(int argc, char* argv[]) {
 
 
     printf("Please enter the message: ");
-    memset(buffer,'\0',256);
-    fgets(buffer,255,stdin);
+    memset(buffer,'\0', sizeof(buffer));
+    fgetc(buffer);
 
     /* Send message to the server */
     count = write(sock, buffer, strlen(buffer));

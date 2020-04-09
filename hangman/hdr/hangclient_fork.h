@@ -14,7 +14,6 @@
 #include "datatypes_client.h"
 #include "datatypes_tcp.h"
 
-#define GUESSLEN 2
 
 void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[MAXPLAYERS]);
 

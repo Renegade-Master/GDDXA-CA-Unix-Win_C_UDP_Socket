@@ -13,7 +13,7 @@ int passiveTCP(const char *, int);
 
 //extern int errno;
 typedef unsigned short u_short;
-u_short portbase = 0;
+
 int errexit(const char *format, ...);
 
 #endif //HANGMAN_HANGSERVER_TCP_FORK_H

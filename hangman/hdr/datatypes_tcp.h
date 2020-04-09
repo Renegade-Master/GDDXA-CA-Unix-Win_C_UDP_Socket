@@ -3,13 +3,13 @@
 #define HANGMAN_DATATYPES_TCP_H
 
 #include <unistd.h>
+#include <stdarg.h>
 
 #define HANGMAN_TCP_PORT 1168
-#define CHAR_HANGMAN_TCP_PORT "1268"
 #define HANGMAN_TCP_FORK_PORT 1268
-#define CHAR_HANGMAN_TCP_FORK_PORT "1268"
 
-#define CHAR_HANGMAN_TCP_CLIENT_FORK "1368"
+
+
 
 
 #define NUM_OF_WORDS (sizeof(word) / sizeof(word[0]))
