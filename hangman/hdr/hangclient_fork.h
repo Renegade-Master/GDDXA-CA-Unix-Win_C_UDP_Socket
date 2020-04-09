@@ -24,4 +24,8 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len);
 
 int PassiveTCPClient(const char *,const char *);
 
+void DieWithUserMessage(const char *, const char *);
+
+void DieWithSystemMessage(const char *);
+
 #endif //HANGMAN_HANGSERVER_UDP_H

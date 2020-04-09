@@ -14,8 +14,5 @@ if [ -e bin/hangmanServer ]; then
 fi
 
 # Compile the binary, with WARNINGS replaced with ERRORS
-<<<<<<< Updated upstream
 gcc src/hangserver.c -o bin/hangmanServer  -std=gnu99 -Wall -Wextra -Werror -D_FORTIFY_SOURCE=1
-=======
-gcc src/hangserver.c -o bin/hangmanServer -std=gnu99 -Wall -Wextra -Werror -D_FORTIFY_SOURCE=1
->>>>>>> Stashed changes
+
