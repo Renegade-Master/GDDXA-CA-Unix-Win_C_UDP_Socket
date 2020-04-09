@@ -102,18 +102,18 @@ int main() {
     char *service;
 
     printf("\n---\nZeroing");
-    bzero(&server, sizeof(server));
-    bzero(&sock, sizeof(sock));
-    bzero(&ssock, sizeof(ssock));
-    bzero(&fd, sizeof(fd));
-    bzero(&client_len, sizeof(client_len));
-    bzero(&childProcCount, sizeof(childProcCount));
-    bzero(&numOfClients,sizeof(numOfClients));
-    bzero(&service,sizeof(service));
+    memset(&server,'\0', sizeof(server));
+    memset(&sock,'\0', sizeof(sock));
+    memset(&ssock,'\0', sizeof(ssock));
+    memset(&fd,'\0', sizeof(fd));
+    memset(&client_len,'\0', sizeof(client_len));
+    memset(&childProcCount,'\0', sizeof(childProcCount));
+    memset(&numOfClients,'\0',sizeof(numOfClients));
+    memset(&service,'\0',sizeof(service));
 
     printf("\n---\npost Zeroing\n---\n");
     for(int i = 0; i < MAXPLAYERS; i++) {
-        bzero(&client[i], sizeof(client[i]));
+        memset(&client[i],'\0', sizeof(client[i]));
     }
     service = "1168";
 
@@ -164,7 +164,7 @@ int main() {
 void reaper(){
 
     int status;
-    bzero(&status, sizeof(status));
+    memset(&status,'\0', sizeof(status));
 
     while (wait3(&status,WNOHANG,(struct rusage *)0)>=0){
         if(status < 0){

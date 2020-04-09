@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 
 
     printf("Please enter the message: ");
-    bzero(buffer,256);
+    memset(buffer,'\0',256);
     fgets(buffer,255,stdin);
 
     /* Send message to the server */
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     }
 
     /* Now read server response */
-    bzero(buffer,256);
+    memset(buffer,'\0',256);
     count = read(sock, buffer, 255);
 
     if (count < 0) {
