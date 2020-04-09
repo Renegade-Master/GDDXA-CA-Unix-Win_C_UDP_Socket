@@ -217,7 +217,7 @@ int main() {
     for(int i = 0; i < MAX_PLAYERS; i++) {
         memset(&client[i],'\0', sizeof(client[i]));
     }
-    service = "1168";
+    service = HANGMAN_TCP_FORK_PORT;
 
     perror("\n---\nCreating Socket\n\n");
     sock = passiveTCP(service,5);
