@@ -12,8 +12,10 @@
 
 /**
  * play_hangman() function is used to handle playing the Networked
- *  Hangman game.
- *  ToDo: Fill this function out
+ * @param sock      - The Client socket to Send/Receive to/from
+ * @param serv_addr - The address of the remote Server
+ * @param serv_len  - The length of the Server Address Structure
+ * @param cli_id    - The ID Tag for this Client
  */
 void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[ID_LEN]) {
     ssize_t count;
@@ -125,9 +127,9 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
 /**
  * test_connection() function is used to verify that a connection can be
  *  made to a Server.
- * @param sock       - The Server socket to Send/Receive to/from
- * @param serv_addr  - The address of the remote Server
- * @param serv_len   - The length of the Server Address Structure
+ * @param sock      - The Client socket to Send/Receive to/from
+ * @param serv_addr - The address of the remote Server
+ * @param serv_len  - The length of the Server Address Structure
  */
 void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
     ssize_t count;
@@ -171,9 +173,9 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
  * setup_connection() function is used to receive a number from the
  *  Server to use when sending any data so that the Server knows which
  *  Client this is.
- * @param sock
- * @param serv_addr
- * @param serv_len
+ * @param sock      - The Client socket to Send/Receive to/from
+ * @param serv_addr - The address of the remote Server
+ * @param serv_len  - The length of the Server Address Structure
  */
 void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
     ssize_t count;
@@ -219,33 +221,34 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
  * main() function is the main runtime function of the UDP Client.
  *  It connects to a Server, and begins processes to commence a game of
  *  Networked Hangman.
- * @param argc  - Count of arguments
- * @param argv  - Command Line arguments [Server-IP Server-Port]
- * @return
+ * @param argc  - The count of cmdline arguments
+ * @param argv  - The cmdline arguments, the address of the remote
+ *  Server
+ * @return      - Exit Status
  */
 int main(int argc, char* argv[]) {
     int udp_sock;
-    struct sockaddr_in serv_addr; // Server's address assembled here
+    struct sockaddr_in serv_addr;
     struct hostent* host_info;
     char* server_name;
 
-    // Seed the random number generator
-    struct timespec tp;
-    srand((unsigned int) clock_gettime(CLOCK_MONOTONIC, &tp));
-
+    // Set the Server address to the cmdline option, or LOCALHOST
     server_name = (argc == 2) ? argv[1] : "localhost";
 
+    // Convert the IP Address to a Human-Readable format
     host_info = gethostbyname(server_name);
     if (host_info == NULL) {
         perror("Unknown Host\n");
         exit(1);
     }
 
+    // Build up the Server Address Structure
     memset(&serv_addr, '\0', sizeof(serv_addr));
     serv_addr.sin_family = (sa_family_t) host_info->h_addrtype;
     memcpy((char*) &serv_addr.sin_addr, host_info->h_addr, (size_t) host_info->h_length);
     serv_addr.sin_port = htons(HANGMAN_UDP_PORT);
 
+    // Create the local Socket
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP
 
     // Error check The Socket
