@@ -1,5 +1,11 @@
-/* Network server for hangman game */
-/* File: hangserver.c */
+/**
+ * Author:  Rory Ryan [K00218864]
+ * Date:    2020/03/09
+ *
+ * This is the Source file for the Client side of the TCP version of the
+ * Networked Hangman game.
+ *
+ */
 
 #include "../hdr/hangserver_tcp_fork.h"
 
@@ -74,7 +80,7 @@ void play_hangman(int sock,struct sockaddr* cli_adr,socklen_t cli_len) {
 }
 int test(int sock){
     int count;
-    char buffer[255];
+    char buffer[MAX_LEN];
     while(1) {
         memset(&buffer, '\0', sizeof(buffer));
 
@@ -140,7 +146,7 @@ int passivesock(const char *service,const char *transport,int qlen) {
     struct sockaddr_in sin;     //an internet endpoint address
     int s, type;                //socket Descriptor and socket type
 
-    memset(&sin, 0, sizeof(sin));
+    memset(&sin, '\0', sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
 
@@ -160,12 +166,7 @@ int passivesock(const char *service,const char *transport,int qlen) {
 
 
     /* Use protocol to choose a socket type */
-    if (strcmp(transport, "udp") == 0) {
-        type = SOCK_DGRAM;
-    }
-    else {
-        type = SOCK_STREAM;
-    }
+    type = SOCK_STREAM;
 
 
     /* Allocate a socket */
@@ -199,7 +200,7 @@ int passivesock(const char *service,const char *transport,int qlen) {
 int main() {
     printf("\nStarted");
     int	sock, ssock, fd, client_len, childProcCount, numOfClients;
-    struct sockaddr_in server, client[MAXPLAYERS];
+    struct sockaddr_in server, client[MAX_PLAYERS];
     char *service;
 
     printf("\n---\nZeroing");
@@ -213,7 +214,7 @@ int main() {
     memset(&service,'\0',sizeof(service));
 
     printf("\n---\npost Zeroing\n---\n");
-    for(int i = 0; i < MAXPLAYERS; i++) {
+    for(int i = 0; i < MAX_PLAYERS; i++) {
         memset(&client[i],'\0', sizeof(client[i]));
     }
     service = "1168";
