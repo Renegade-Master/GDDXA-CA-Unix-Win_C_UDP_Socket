@@ -18,7 +18,8 @@
  * @param cli_len           - The length of the Client Address Structure
  * @param connected_clients - The number of connected Clients
  */
-void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, const int* connected_clients) {
+//void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, const int* connected_clients) {
+void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_len, const int* connected_clients) {
     fprintf(stdout, "\n---\nPlaying Hangman\n");
 
     // Set up the game
@@ -67,12 +68,13 @@ void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, co
     gethostname(hostname, MAX_LEN);
 
     // Client currently being handled
-    struct sockaddr* cli_addr = NULL;
+    struct sockaddr* cli_addr;
 
     // Introduce each Client
     for (int i = 0; i < clients_in_play; i++) {
         // Set the current Client
         cli_addr = (struct sockaddr*) &cli_addrs[i];
+        cli_addr = ((struct sockaddr*) &cli_addrs);
 
         memset(&outbuf, '\0', sizeof(outbuf));
         sprintf(outbuf, "%s", hostname);
@@ -315,41 +317,49 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
 int main(int argc, char* argv[]) {
     // Set the `max_players` to the cmdline option, or MAX_PLAYERS
     int max_players = (argc == 2) ? (int) strtol(argv[1], NULL, 10) : MAX_PLAYERS;
-    int udp_sock;
-    struct sockaddr_in serv_addr;
-    struct sockaddr_in cli_addrs[max_players];
+
+    int sockfd;
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
+    int numbytes;
+    struct sockaddr_storage their_addr[max_players];
+    char buf[MAX_LEN];
+    socklen_t addr_len;
+    char s[INET6_ADDRSTRLEN];
     int connected_clients;
 
-    // Zero out Server data
-    memset(&serv_addr, '\0', sizeof(serv_addr));
-    memset(&udp_sock, '\0', sizeof(udp_sock));
-    memset(&connected_clients, '\0', sizeof(connected_clients));
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE; // use my IP
 
-    for (int i = 0; i < max_players; i++) {
-        memset(&cli_addrs[i], '\0', sizeof(cli_addrs[i]));
+    if ((rv = getaddrinfo(NULL, HANGMAN_UDP_PORT, &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        return 1;
     }
 
-    // Seed the random number generator
-    srandom((unsigned int) time(NULL));
+    // loop through all the results and bind to the first we can
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+                             p->ai_protocol)) == -1) {
+            perror("listener: socket");
+            continue;
+        }
 
-    // Create the UDP Socket
-    udp_sock = socket(AF_INET, SOCK_DGRAM, 0); //0 or IPPROTO_UDP
+        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+            close(sockfd);
+            perror("listener: bind");
+            continue;
+        }
 
-    // Error check The Socket
-    if (udp_sock < 0) {
-        perror("Creating Datagram Socket Failed\n");
-        exit(1); // Error Condition 01
+        break;
     }
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port = htons(HANGMAN_UDP_PORT);
-
-    // Bind the Server socket to an address
-    if (bind(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Binding Datagram Socket Failed\n");
-        exit(2); // Error Condition 02
+    if (p == NULL) {
+        fprintf(stderr, "listener: failed to bind socket\n");
+        return 2;
     }
+
     fprintf(stdout, "UDP Server Socket Created\n");
 
     // Test connections (DEBUG FUNCTION)
@@ -360,9 +370,9 @@ int main(int argc, char* argv[]) {
     connected_clients = 0;
     for (int i = 0; i < max_players; i++) {
         fprintf(stdout, "\n---\nCreating Client #%d", connected_clients);
-        setup_connections(udp_sock, (struct sockaddr*) &cli_addrs[i], sizeof(cli_addrs[i]), &connected_clients);
+        setup_connections(sockfd, (struct sockaddr*) &their_addr[i], sizeof(their_addr[i]), &connected_clients);
         connected_clients++;
     }
 
-    play_hangman(udp_sock, cli_addrs, sizeof(struct sockaddr), &connected_clients);
+    play_hangman(sockfd, their_addr, sizeof(struct sockaddr), &connected_clients);
 }

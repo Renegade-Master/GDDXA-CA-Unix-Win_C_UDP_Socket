@@ -18,6 +18,7 @@
  * @param cli_id    - The ID Tag for this Client
  */
 void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[ID_LEN]) {
+//void play_hangman(int sock, struct sockaddr_storage* serv_addr, socklen_t serv_len, char cli_id[ID_LEN]) {
     ssize_t count;
     int round_local;
     char hostname[MAX_LEN];
@@ -178,6 +179,7 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
  * @param serv_len  - The length of the Server Address Structure
  */
 void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
+// void setup_connection(int sock, void* serv_addr, socklen_t serv_len) {
     ssize_t count;
     char id_request[ID_LEN + 1];
     char id_response[ID_LEN];
@@ -213,7 +215,7 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
 
     memset(&id_request, '\0', sizeof(id_request));
 
-    play_hangman(sock, (struct sockaddr*) &serv_addr, sizeof(*serv_addr), id_response);
+    play_hangman(sock, serv_addr, serv_len, id_response);
 }
 
 
@@ -227,61 +229,50 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
  * @return      - Exit Status
  */
 int main(int argc, char* argv[]) {
-    int udp_sock;
-    struct addrinfo hints;
-    struct addrinfo* serv_info;
-    struct addrinfo* next_serv_info;
-    struct sockaddr_storage serv_addr;
+    int sockfd;
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
+    int numbytes;
     char* server_name;
-    char server_port[6];
-
-    memset(&udp_sock, '\0', sizeof(udp_sock));
-    memset(&hints, '\0', sizeof(hints));
-    memset(&serv_addr, '\0', sizeof(serv_addr));
-    memset(&server_name, '\0', sizeof(server_name));
-    memset(&server_port, '\0', sizeof(server_port));
 
     // Set the Server address to the cmdline option, or LOCALHOST
     server_name = (argc == 2) ? argv[1] : "::1";
-    sprintf(server_port, "%d", HANGMAN_UDP_PORT);
 
-    // Convert the IP Address to a Human-Readable format
+    memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
 
-    // Build the Server Address Structure
-    if (getaddrinfo(server_name, server_port, &hints, &serv_info) != 0) {
-        perror("getaddrinfo() failed\n");
-        exit(1);
+    if ((rv = getaddrinfo(server_name, HANGMAN_UDP_PORT, &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        return 1;
     }
 
-    // Attempt to create the Local Socket
-    for(next_serv_info = serv_info; next_serv_info != NULL; next_serv_info = next_serv_info->ai_next) {
-        if((udp_sock = socket(next_serv_info->ai_family, next_serv_info->ai_socktype, next_serv_info->ai_protocol)) < 0) {
-            perror("Bad Result\n");
+    // loop through all the results and make a socket
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+                             p->ai_protocol)) == -1) {
+            perror("talker: socket");
             continue;
         }
 
-        // Found a suitable address
-        serv_info = next_serv_info;
         break;
     }
 
-    // Error check The Socket
-    if (udp_sock < 0) {
-        perror("Creating Datagram Socket Failed\n");
-        exit(2);
+    if (p == NULL) {
+        fprintf(stderr, "talker: failed to create socket\n");
+        return 2;
     }
 
     fprintf(stdout, "UDP Client Socket Created\n");
 
     //test_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
     // setup_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
-    setup_connection(udp_sock, (struct sockaddr*) serv_info->ai_addr, sizeof(serv_info->ai_addrlen));
+    // setup_connection(udp_sock, p->ai_addr, sizeof(p->ai_addrlen));
+    setup_connection(sockfd, p->ai_addr, p->ai_addrlen);
 
     // Tidy up the Socket and close the program
-    freeaddrinfo(serv_info);
-    close(udp_sock);
+    freeaddrinfo(servinfo);
+    close(sockfd);
 
     return(0);
 }
