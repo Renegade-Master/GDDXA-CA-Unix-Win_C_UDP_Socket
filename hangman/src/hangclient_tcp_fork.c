@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     char *server = (argc >= 2) ? argv[1] : "localhost";
     char *service = (argc == 3) ? argv[2] : "1168";
 
-    fprintf("\n---\nPassivetTCPClient(server: %s, service: %s)\n---\n",server,service);
+    fprintf(stdout, "\n---\nPassivetTCPClient(server: %s, service: %s)\n---\n",server,service);
     // Create a connected TCP socket
     sock = PassiveTCPClient(server, service);
     if (sock < 0){
