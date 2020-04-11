@@ -19,7 +19,9 @@
  * @param connected_clients - The number of connected Clients
  */
 //void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, const int* connected_clients) {
-void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_len, const int* connected_clients) {
+//void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_len, const int* connected_clients) {
+//void play_hangman(int sock, struct addrinfo* cli_addrs, const int* connected_clients) {
+void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* connected_clients) {
     fprintf(stdout, "\n---\nPlaying Hangman\n");
 
     // Set up the game
@@ -68,17 +70,32 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_le
     gethostname(hostname, MAX_LEN);
 
     // Client currently being handled
-    struct sockaddr* cli_addr;
+    struct sockaddr_storage cli_addr;
+    socklen_t addr_len = sizeof cli_addr;
+    //struct addrinfo* cli_addr;
+
+    memset(&cli_addr, '\0', addr_len);
 
     // Introduce each Client
     for (int i = 0; i < clients_in_play; i++) {
         // Set the current Client
-        cli_addr = (struct sockaddr*) &cli_addrs[i];
-        cli_addr = ((struct sockaddr*) &cli_addrs);
+        cli_addr = cli_addrs[i];
+
+        switch(cli_addr.ss_family) {
+            case AF_INET:
+                fprintf(stdout, "Client Family is IPV4\n");
+                break;
+            case AF_INET6:
+                fprintf(stdout, "Client Family is IPV6\n");
+                break;
+            default:
+                fprintf(stdout, "Client Family is Other: %hu\n", cli_addr.ss_family);
+                break;
+        }
 
         memset(&outbuf, '\0', sizeof(outbuf));
         sprintf(outbuf, "%s", hostname);
-        sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+        count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
 
         // Check that there were no errors with sending the data
         if (count < 0) {
@@ -88,7 +105,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_le
 
         memset(&outbuf, '\0', sizeof(outbuf));
         snprintf(outbuf, MAX_TOTAL_LEN, "\n\tWord: %s\n\tLives: %hu", part_word, (unsigned short) lives);
-        sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+        count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
 
         // Check that there were no errors with sending the data
         if (count < 0) {
@@ -106,12 +123,12 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_le
             fprintf(stdout, "\nServing Client %d", i);
 
             // Set the current Client
-            cli_addr = (struct sockaddr*) &cli_addrs[i];
+            cli_addr = cli_addrs[i];
 
             // Inform the Client that it's their turn
             memset(&outbuf, '\0', sizeof(outbuf));
             sprintf(outbuf, "%d", (i + 1));
-            sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+            count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
 
             // Check that there were no errors with sending the data
             if (count < 0) {
@@ -122,7 +139,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_le
             // Send the current state of the game to the Client
             memset(&outbuf, '\0', sizeof(outbuf));
             snprintf(outbuf, MAX_TOTAL_LEN, "\n\tWord: %s\n\tLives: %hu", part_word, (unsigned short) lives);
-            sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+            count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
 
             // Check that there were no errors with sending the data
             if (count < 0) {
@@ -131,7 +148,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_le
             }
 
             // Get a letter from player guess
-            count = recvfrom(sock, guess, MAX_LEN, 0, cli_addr, &cli_len);
+            count = recvfrom(sock, guess, MAX_LEN, 0, (struct sockaddr*) &cli_addr, &addr_len);
 
             // Check the received data for errors
             if (count < 0) {
@@ -159,7 +176,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_le
                 // Let the Client(s) know they WON
                 memset(&outbuf, '\0', sizeof(outbuf));
                 sprintf(outbuf, "%s", "#GAMEOVER");
-                sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+                count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
 
                 // Check that there were no errors with sending the data
                 if (count < 0) {
@@ -173,7 +190,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_le
                 // Let the Client(s) know they LOST
                 memset(&outbuf, '\0', sizeof(outbuf));
                 sprintf(outbuf, "%s", "#GAMEOVER");
-                sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+                count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
 
                 // Check that there were no errors with sending the data
                 if (count < 0) {
@@ -189,9 +206,9 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_le
     // Send ENDGAME message
     for (int i = 0; i < clients_in_play; i++) {
         // Set the current Client
-        cli_addr = (struct sockaddr*) &cli_addrs[i];
+        cli_addr = cli_addrs[i];
 
-        sendto(sock, outbuf, strlen(outbuf), 0, cli_addr, cli_len);
+        count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
 
         // Check that there were no errors with sending the data
         if (count < 0) {
@@ -243,7 +260,7 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
 
         // Print confirmation of the send to the screen
         fprintf(stdout, "Messg Sent: %s", i_line);
-    } while (strcmp(i_line, "#quit\0") != 0); // ToDo: Create stop condition that actually works
+    } while (strcmp(i_line, "#quit\0") != 0);
 }
 
 
@@ -254,24 +271,29 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
  * @param cli_len   - The length of the Client Address Structure
  * @param cli_count - The numerical identifier for this Client
  */
-void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, const int* cli_count) {
+//void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, const int* cli_count) {
+// void setup_connections(int sock, struct addrinfo* cli_addr, const int* cli_count) {
+void setup_connections(int sock, struct sockaddr_storage cli_addr, const int* cli_count) {
     ssize_t count;
     int client_id;
     char id_request[ID_LEN];
     char id_response[ID_LEN];
+    socklen_t addr_len = sizeof cli_addr;
 
     // Zero out data
     memset(&count, '\0', sizeof(count));
     memset(&client_id, '\0', sizeof(client_id));
     memset(&id_request, '\0', sizeof(id_request));
     memset(&id_response, '\0', sizeof(id_response));
-    memset(cli_addr, '\0', sizeof(cli_len));
+    //memset(cli_addr, '\0', sizeof(cli_len));
+
+    client_id = (*cli_count) + 1;
 
     fprintf(stdout, "\nSetting Up New Client\n");
     fprintf(stdout, "\nAwaiting request on Socket %d...\n", sock);
 
     // Receive data from the Client Socket
-    count = recvfrom(sock, id_request, ID_LEN, 0, cli_addr, &cli_len);
+    count = recvfrom(sock, id_request, ID_LEN, 0, (struct sockaddr*) &cli_addr, &addr_len);
 
     // Check the received data for errors
     if (count < 0) {
@@ -279,9 +301,20 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
         exit(3); // Error Condition 03
     }
 
+    switch(cli_addr.ss_family) {
+        case AF_INET:
+            fprintf(stdout, "Client Family is IPV4\n");
+            break;
+        case AF_INET6:
+            fprintf(stdout, "Client Family is IPV6\n");
+            break;
+        default:
+            fprintf(stdout, "Client Family is Other: %hu\n", cli_addr.ss_family);
+            break;
+    }
+
     // Print the received message to the screen
     fprintf(stdout, "\nMessg Received: %s", id_request);
-    client_id = (*cli_count) + 1;
 
     // Assign a Client ID to the Client if it is new
     if (strcmp(id_request, "-1\0") == 0) {
@@ -292,7 +325,7 @@ void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, c
     }
 
     // Send data to the Client Socket
-    count = sendto(sock, id_response, ID_LEN, 0, cli_addr, cli_len);
+    count = sendto(sock, id_response, ID_LEN, 0, (struct sockaddr*) &cli_addr, addr_len);
 
     // Check that there were no errors with sending the data
     if (count < 0) {
@@ -318,20 +351,16 @@ int main(int argc, char* argv[]) {
     // Set the `max_players` to the cmdline option, or MAX_PLAYERS
     int max_players = (argc == 2) ? (int) strtol(argv[1], NULL, 10) : MAX_PLAYERS;
 
-    int sockfd;
+    int sockfd = -1;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    int numbytes;
     struct sockaddr_storage their_addr[max_players];
-    char buf[MAX_LEN];
-    socklen_t addr_len;
-    char s[INET6_ADDRSTRLEN];
     int connected_clients;
 
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
+    hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_PASSIVE; // use my IP
+    hints.ai_flags = AI_PASSIVE;
 
     if ((rv = getaddrinfo(NULL, HANGMAN_UDP_PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -362,6 +391,18 @@ int main(int argc, char* argv[]) {
 
     fprintf(stdout, "UDP Server Socket Created\n");
 
+    switch(p->ai_family) {
+        case AF_INET:
+            fprintf(stdout, "Server Family is IPV4\n");
+            break;
+        case AF_INET6:
+            fprintf(stdout, "Server Family is IPV6\n");
+            break;
+        default:
+            fprintf(stdout, "Server Family is Other: %d\n", p->ai_family);
+            break;
+    }
+
     // Test connections (DEBUG FUNCTION)
     //test_connection(udp_sock, (struct sockaddr*) &cli_addr, sizeof(cli_addr));
 
@@ -370,9 +411,9 @@ int main(int argc, char* argv[]) {
     connected_clients = 0;
     for (int i = 0; i < max_players; i++) {
         fprintf(stdout, "\n---\nCreating Client #%d", connected_clients);
-        setup_connections(sockfd, (struct sockaddr*) &their_addr[i], sizeof(their_addr[i]), &connected_clients);
+        setup_connections(sockfd, their_addr[i], &connected_clients);
         connected_clients++;
     }
 
-    play_hangman(sockfd, their_addr, sizeof(struct sockaddr), &connected_clients);
+    play_hangman(sockfd, their_addr, &connected_clients);
 }

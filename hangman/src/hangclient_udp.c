@@ -17,8 +17,9 @@
  * @param serv_len  - The length of the Server Address Structure
  * @param cli_id    - The ID Tag for this Client
  */
-void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[ID_LEN]) {
+//void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[ID_LEN]) {
 //void play_hangman(int sock, struct sockaddr_storage* serv_addr, socklen_t serv_len, char cli_id[ID_LEN]) {
+void play_hangman(int sock, struct addrinfo* serv_addr, char cli_id[ID_LEN]) {
     ssize_t count;
     int round_local;
     char hostname[MAX_LEN];
@@ -40,7 +41,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
     fprintf(stdout, "Playing Hangman as Client #%s on [%s]\n", cli_id, hostname);
 
     // Receive the Hostname of the Server
-    count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr, &serv_len);
+    count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr->ai_addr, &serv_addr->ai_addrlen);
 
     // Check the received data for errors
     if (count < 0) {
@@ -52,7 +53,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
 
     // Receive the initial game state
     memset(&i_line, '\0', sizeof(i_line));
-    count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr, &serv_len);
+    count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr->ai_addr, &serv_addr->ai_addrlen);
 
     // Check the received data for errors
     if (count < 0) {
@@ -67,7 +68,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
         do {
             // Receive the current turn from the Server
             memset(&i_line, '\0', sizeof(i_line));
-            count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr, &serv_len);
+            count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr->ai_addr, &serv_addr->ai_addrlen);
 
             // Check the received data for errors
             if (count < 0) {
@@ -82,7 +83,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
 
         // Receive the current game state
         memset(&i_line, '\0', sizeof(i_line));
-        count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr, &serv_len);
+        count = recvfrom(sock, i_line, MAX_LEN, 0, serv_addr->ai_addr, &serv_addr->ai_addrlen);
 
         // Check the received data for errors
         if (count < 0) {
@@ -113,7 +114,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
         fprintf(stdout, "Guess was: %s", o_guess);
 
         // Send the data to the Server
-        count = sendto(sock, o_guess, GUESS_LEN, 0, serv_addr, serv_len);
+        count = sendto(sock, o_guess, GUESS_LEN, 0, serv_addr->ai_addr, serv_addr->ai_addrlen);
 
         // Check the sent data for errors
         if (count < 0) {
@@ -178,8 +179,9 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
  * @param serv_addr - The address of the remote Server
  * @param serv_len  - The length of the Server Address Structure
  */
-void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
+//void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
 // void setup_connection(int sock, void* serv_addr, socklen_t serv_len) {
+void setup_connection(int sock, struct addrinfo* serv_addr) {
     ssize_t count;
     char id_request[ID_LEN + 1];
     char id_response[ID_LEN];
@@ -194,7 +196,7 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
     fprintf(stdout, "Sending: %s\n", id_request);
 
     // Send the data to the Server
-    count = sendto(sock, id_request, ID_LEN, 0, serv_addr, serv_len);
+    count = sendto(sock, id_request, ID_LEN, 0, serv_addr->ai_addr, serv_addr->ai_addrlen);
 
     // Check the sent data for errors
     if (count < 0) {
@@ -203,7 +205,7 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
     }
 
     // Receive a reply from the Server
-    count = recvfrom(sock, id_response, ID_LEN, 0, serv_addr, &serv_len);
+    count = recvfrom(sock, id_response, ID_LEN, 0, serv_addr->ai_addr, &serv_addr->ai_addrlen);
 
     // Check the received data for errors
     if (count < 0) {
@@ -215,7 +217,7 @@ void setup_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) 
 
     memset(&id_request, '\0', sizeof(id_request));
 
-    play_hangman(sock, serv_addr, serv_len, id_response);
+    play_hangman(sock, serv_addr, id_response);
 }
 
 
@@ -232,7 +234,6 @@ int main(int argc, char* argv[]) {
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    int numbytes;
     char* server_name;
 
     // Set the Server address to the cmdline option, or LOCALHOST
@@ -268,7 +269,8 @@ int main(int argc, char* argv[]) {
     //test_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
     // setup_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
     // setup_connection(udp_sock, p->ai_addr, sizeof(p->ai_addrlen));
-    setup_connection(sockfd, p->ai_addr, p->ai_addrlen);
+    //setup_connection(sockfd, p->ai_addr, p->ai_addrlen);
+    setup_connection(sockfd, p);
 
     // Tidy up the Socket and close the program
     freeaddrinfo(servinfo);
