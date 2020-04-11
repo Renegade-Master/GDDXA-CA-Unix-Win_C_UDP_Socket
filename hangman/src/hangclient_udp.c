@@ -231,7 +231,7 @@ void setup_connection(int sock, struct addrinfo* serv_addr) {
  * @return      - Exit Status
  */
 int main(int argc, char* argv[]) {
-    int sockfd;
+    int sockfd = -1;
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char* server_name;
@@ -245,7 +245,7 @@ int main(int argc, char* argv[]) {
 
     if ((rv = getaddrinfo(server_name, HANGMAN_UDP_PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return 1;
+        exit(1);
     }
 
     // loop through all the results and make a socket
@@ -261,7 +261,7 @@ int main(int argc, char* argv[]) {
 
     if (p == NULL) {
         fprintf(stderr, "talker: failed to create socket\n");
-        return 2;
+        exit(2);
     }
 
     fprintf(stdout, "UDP Client Socket Created\n");

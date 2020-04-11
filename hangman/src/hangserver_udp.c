@@ -21,7 +21,8 @@
 //void play_hangman(int sock, struct sockaddr_in* cli_addrs, socklen_t cli_len, const int* connected_clients) {
 //void play_hangman(int sock, struct sockaddr_storage* cli_addrs, socklen_t cli_len, const int* connected_clients) {
 //void play_hangman(int sock, struct addrinfo* cli_addrs, const int* connected_clients) {
-void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* connected_clients) {
+//void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* connected_clients) {
+void play_hangman(int sock, struct addrinfo* cli_addrs, const int* connected_clients) {
     fprintf(stdout, "\n---\nPlaying Hangman\n");
 
     // Set up the game
@@ -70,18 +71,17 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
     gethostname(hostname, MAX_LEN);
 
     // Client currently being handled
-    struct sockaddr_storage cli_addr;
-    socklen_t addr_len = sizeof cli_addr;
-    //struct addrinfo* cli_addr;
+    struct addrinfo* cli_addr;
+    socklen_t addr_len = sizeof(*cli_addr);
 
-    memset(&cli_addr, '\0', addr_len);
+    //memset(&cli_addr, '\0', addr_len);
 
     // Introduce each Client
     for (int i = 0; i < clients_in_play; i++) {
         // Set the current Client
-        cli_addr = cli_addrs[i];
+        cli_addr = &cli_addrs[i];
 
-        switch(cli_addr.ss_family) {
+        switch(cli_addr->ai_family) {
             case AF_INET:
                 fprintf(stdout, "Client Family is IPV4\n");
                 break;
@@ -89,13 +89,13 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
                 fprintf(stdout, "Client Family is IPV6\n");
                 break;
             default:
-                fprintf(stdout, "Client Family is Other: %hu\n", cli_addr.ss_family);
+                fprintf(stdout, "Client Family is Other: %u\n", cli_addr->ai_family);
                 break;
         }
 
         memset(&outbuf, '\0', sizeof(outbuf));
         sprintf(outbuf, "%s", hostname);
-        count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
+        count = sendto(sock, outbuf, strlen(outbuf), 0, cli_addr->ai_addr, cli_addr->ai_addrlen);
 
         // Check that there were no errors with sending the data
         if (count < 0) {
@@ -105,7 +105,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
 
         memset(&outbuf, '\0', sizeof(outbuf));
         snprintf(outbuf, MAX_TOTAL_LEN, "\n\tWord: %s\n\tLives: %hu", part_word, (unsigned short) lives);
-        count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
+        count = sendto(sock, outbuf, strlen(outbuf), 0, cli_addr->ai_addr, cli_addr->ai_addrlen);
 
         // Check that there were no errors with sending the data
         if (count < 0) {
@@ -123,12 +123,12 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
             fprintf(stdout, "\nServing Client %d", i);
 
             // Set the current Client
-            cli_addr = cli_addrs[i];
+            cli_addr = &cli_addrs[i];
 
             // Inform the Client that it's their turn
             memset(&outbuf, '\0', sizeof(outbuf));
             sprintf(outbuf, "%d", (i + 1));
-            count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
+            count = sendto(sock, outbuf, strlen(outbuf), 0, cli_addr->ai_addr, cli_addr->ai_addrlen);
 
             // Check that there were no errors with sending the data
             if (count < 0) {
@@ -139,7 +139,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
             // Send the current state of the game to the Client
             memset(&outbuf, '\0', sizeof(outbuf));
             snprintf(outbuf, MAX_TOTAL_LEN, "\n\tWord: %s\n\tLives: %hu", part_word, (unsigned short) lives);
-            count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
+            count = sendto(sock, outbuf, strlen(outbuf), 0, cli_addr->ai_addr, cli_addr->ai_addrlen);
 
             // Check that there were no errors with sending the data
             if (count < 0) {
@@ -148,7 +148,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
             }
 
             // Get a letter from player guess
-            count = recvfrom(sock, guess, MAX_LEN, 0, (struct sockaddr*) &cli_addr, &addr_len);
+            count = recvfrom(sock, guess, MAX_LEN, 0, cli_addr->ai_addr, &cli_addr->ai_addrlen);
 
             // Check the received data for errors
             if (count < 0) {
@@ -176,7 +176,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
                 // Let the Client(s) know they WON
                 memset(&outbuf, '\0', sizeof(outbuf));
                 sprintf(outbuf, "%s", "#GAMEOVER");
-                count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
+                count = sendto(sock, outbuf, strlen(outbuf), 0, cli_addr->ai_addr, cli_addr->ai_addrlen);
 
                 // Check that there were no errors with sending the data
                 if (count < 0) {
@@ -190,7 +190,7 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
                 // Let the Client(s) know they LOST
                 memset(&outbuf, '\0', sizeof(outbuf));
                 sprintf(outbuf, "%s", "#GAMEOVER");
-                count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
+                count = sendto(sock, outbuf, strlen(outbuf), 0, cli_addr->ai_addr, cli_addr->ai_addrlen);
 
                 // Check that there were no errors with sending the data
                 if (count < 0) {
@@ -206,9 +206,9 @@ void play_hangman(int sock, struct sockaddr_storage* cli_addrs, const int* conne
     // Send ENDGAME message
     for (int i = 0; i < clients_in_play; i++) {
         // Set the current Client
-        cli_addr = cli_addrs[i];
+        cli_addr = &cli_addrs[i];
 
-        count = sendto(sock, outbuf, strlen(outbuf), 0, (struct sockaddr*) &cli_addr, addr_len);
+        count = sendto(sock, outbuf, strlen(outbuf), 0, cli_addr->ai_addr, cli_addr->ai_addrlen);
 
         // Check that there were no errors with sending the data
         if (count < 0) {
@@ -271,21 +271,30 @@ void test_connection(int sock, struct sockaddr* cli_addr, socklen_t cli_len) {
  * @param cli_len   - The length of the Client Address Structure
  * @param cli_count - The numerical identifier for this Client
  */
-//void setup_connections(int sock, struct sockaddr* cli_addr, socklen_t cli_len, const int* cli_count) {
-// void setup_connections(int sock, struct addrinfo* cli_addr, const int* cli_count) {
-void setup_connections(int sock, struct sockaddr_storage cli_addr, const int* cli_count) {
+//void setup_connections(int sock, struct addrinfo* cli_addr, const int* cli_count) {
+struct addrinfo setup_connections(int sock, const int* cli_count) {
+    int temp_sock = -1;
     ssize_t count;
     int client_id;
     char id_request[ID_LEN];
     char id_response[ID_LEN];
-    socklen_t addr_len = sizeof cli_addr;
+
+    // Incoming Client Data Info
+    char client_name[NI_MAXHOST];
+    char server_name[NI_MAXSERV];
+    struct addrinfo hints, *client_info, *p;
+    struct sockaddr_storage client_addr_storage;
+    socklen_t client_addr_len = sizeof(client_addr_storage);
 
     // Zero out data
     memset(&count, '\0', sizeof(count));
     memset(&client_id, '\0', sizeof(client_id));
     memset(&id_request, '\0', sizeof(id_request));
     memset(&id_response, '\0', sizeof(id_response));
-    //memset(cli_addr, '\0', sizeof(cli_len));
+    memset(&hints, '\0', sizeof(hints));
+
+    memset(&client_name, '\0', sizeof(client_name));
+    memset(&server_name, '\0', sizeof(server_name));
 
     client_id = (*cli_count) + 1;
 
@@ -293,7 +302,7 @@ void setup_connections(int sock, struct sockaddr_storage cli_addr, const int* cl
     fprintf(stdout, "\nAwaiting request on Socket %d...\n", sock);
 
     // Receive data from the Client Socket
-    count = recvfrom(sock, id_request, ID_LEN, 0, (struct sockaddr*) &cli_addr, &addr_len);
+    count = recvfrom(sock, id_request, ID_LEN, 0, (struct sockaddr*) &client_addr_storage, &client_addr_len);
 
     // Check the received data for errors
     if (count < 0) {
@@ -301,7 +310,7 @@ void setup_connections(int sock, struct sockaddr_storage cli_addr, const int* cl
         exit(3); // Error Condition 03
     }
 
-    switch(cli_addr.ss_family) {
+    switch(client_addr_storage.ss_family) {
         case AF_INET:
             fprintf(stdout, "Client Family is IPV4\n");
             break;
@@ -309,7 +318,45 @@ void setup_connections(int sock, struct sockaddr_storage cli_addr, const int* cl
             fprintf(stdout, "Client Family is IPV6\n");
             break;
         default:
-            fprintf(stdout, "Client Family is Other: %hu\n", cli_addr.ss_family);
+            fprintf(stdout, "Client Family is Other: %u\n", client_addr_storage.ss_family);
+            break;
+    }
+
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    getnameinfo((struct sockaddr*) &client_addr_storage, client_addr_len, client_name, NI_MAXHOST, server_name, NI_MAXSERV, 0);
+
+    if ((count = getaddrinfo(client_name, HANGMAN_UDP_PORT, &hints, &client_info)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(count));
+        exit(8);
+    }
+
+    // loop through all the results and make a socket
+    for(p = client_info; p != NULL; p = p->ai_next) {
+        if ((temp_sock = socket(p->ai_family, p->ai_socktype,
+                             p->ai_protocol)) == -1) {
+            perror("talker: socket");
+            continue;
+        }
+
+        break;
+    }
+
+    if (p == NULL) {
+        fprintf(stderr, "talker: failed to create socket\n");
+        exit(2);
+    }
+
+    switch(p->ai_family) {
+        case AF_INET:
+            fprintf(stdout, "Client Family2 is IPV4\n");
+            break;
+        case AF_INET6:
+            fprintf(stdout, "Client Family2 is IPV6\n");
+            break;
+        default:
+            fprintf(stdout, "Client Family2 is Other: %u\n", p->ai_family);
             break;
     }
 
@@ -325,7 +372,7 @@ void setup_connections(int sock, struct sockaddr_storage cli_addr, const int* cl
     }
 
     // Send data to the Client Socket
-    count = sendto(sock, id_response, ID_LEN, 0, (struct sockaddr*) &cli_addr, addr_len);
+    count = sendto(sock, id_response, ID_LEN, 0, p->ai_addr, p->ai_addrlen);
 
     // Check that there were no errors with sending the data
     if (count < 0) {
@@ -335,6 +382,8 @@ void setup_connections(int sock, struct sockaddr_storage cli_addr, const int* cl
 
     // Print confirmation of the send to the screen
     fprintf(stdout, "\nMessg Sent: %s\n", id_response);
+
+    return (*p);
 }
 
 
@@ -354,7 +403,7 @@ int main(int argc, char* argv[]) {
     int sockfd = -1;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    struct sockaddr_storage their_addr[max_players];
+    struct addrinfo client_info[max_players];
     int connected_clients;
 
     memset(&hints, 0, sizeof hints);
@@ -364,7 +413,7 @@ int main(int argc, char* argv[]) {
 
     if ((rv = getaddrinfo(NULL, HANGMAN_UDP_PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return 1;
+        exit(1);
     }
 
     // loop through all the results and bind to the first we can
@@ -386,7 +435,7 @@ int main(int argc, char* argv[]) {
 
     if (p == NULL) {
         fprintf(stderr, "listener: failed to bind socket\n");
-        return 2;
+        exit(2);
     }
 
     fprintf(stdout, "UDP Server Socket Created\n");
@@ -411,9 +460,16 @@ int main(int argc, char* argv[]) {
     connected_clients = 0;
     for (int i = 0; i < max_players; i++) {
         fprintf(stdout, "\n---\nCreating Client #%d", connected_clients);
-        setup_connections(sockfd, their_addr[i], &connected_clients);
+        //setup_connections(sockfd, &client_info[i], &connected_clients);
+        client_info[i] = setup_connections(sockfd, &connected_clients);
         connected_clients++;
     }
 
-    play_hangman(sockfd, their_addr, &connected_clients);
+    play_hangman(sockfd, client_info, &connected_clients);
+
+    // Tidy up the Socket and close the program
+    freeaddrinfo(client_info);
+    close(sockfd);
+
+    return(0);
 }
