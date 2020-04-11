@@ -261,4 +261,8 @@ int main(int argc, char* argv[]) {
 
     //test_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
     setup_connection(udp_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
+
+    // Close the Socket, and exit the program
+    close(udp_sock);
+    return (0);
 }
