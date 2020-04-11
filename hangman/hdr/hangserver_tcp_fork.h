@@ -8,8 +8,8 @@
 #include "datatypes_tcp.h"
 
 void reaper();
-int passivesock(const char *service,const char *transport,int qlen);
-int passiveTCP(const char *, int);
+int passivesock(int service,const char *transport,int qlen);
+int passiveTCP(int , int);
 
 //extern int errno;
 typedef unsigned short u_short;

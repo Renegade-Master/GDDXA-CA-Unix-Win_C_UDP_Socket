@@ -2,7 +2,7 @@
 // Created by Rory Ryan on 09/04/2020.
 //
 
-#include "hdr/hangclient_tcp_fork.h"
+#include "../hdr/hangclient_tcp_fork.h"
 
 
 /**
@@ -16,10 +16,12 @@ int main(int argc, char* argv[]) {
     char buffer[MAX_LEN];
 
     char *server = (argc >= 2) ? argv[1] : "localhost";
-    char *service = (argc == 3) ? argv[2] : "1168";
+    //char *service = (argc == 3) ? argv[2] : (char *)HANGMAN_TCP_FORK_PORT;
+    char *service = "1268";
 
     fprintf(stdout, "\n---\nPassivetTCPClient(server: %s, service: %s)\n---\n",server,service);
     // Create a connected TCP socket
+
     sock = PassiveTCPClient(server, service);
     if (sock < 0){
         perror("\nSetupTCPClientSocket() failed");
@@ -28,9 +30,9 @@ int main(int argc, char* argv[]) {
 
 
 
-    printf("Please enter the message: ");
+    printf("Please enter the message(Single Letter This is Hangman :) ): ");
     memset(buffer,'\0', sizeof(buffer));
-    fgetc(buffer);
+    buffer[0] = (char) fgetc(stdin);
 
     /* Send message to the server */
     count = write(sock, buffer, strlen(buffer));
@@ -61,7 +63,7 @@ int main(int argc, char* argv[]) {
  * @return
  */
 int PassiveTCPClient(const char *server,const char *service){
-
+    printf("Passive TCP Client");
     struct addrinfo addrCriteria;                   // Criteria for address match
     memset(&addrCriteria, 0, sizeof(addrCriteria)); // Zero out structure
     addrCriteria.ai_family = AF_UNSPEC;             // v4 or v6 is OK
@@ -70,7 +72,7 @@ int PassiveTCPClient(const char *server,const char *service){
 
     // Get address(es)
     struct addrinfo *servAddr; // Holder for returned list of server addrs
-    int rtnVal = getaddrinfo(server, service, &addrCriteria, &servAddr);
+    int rtnVal = getaddrinfo(server,service, &addrCriteria, &servAddr);
     if (rtnVal != 0) {
         perror("GetAddrInfo() Failed: ");
         exit(2);

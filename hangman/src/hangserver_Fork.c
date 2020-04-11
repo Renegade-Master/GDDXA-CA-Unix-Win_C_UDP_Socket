@@ -123,8 +123,8 @@ void reaper(){
  * @param qlen
  * @return
  */
-int passiveTCP(const char *service, int qlen){
-    printf("---\n\nPassiveTCP");
+int passiveTCP(int service, int qlen){
+    printf("---\nPassiveTCP");
     return passivesock(service,"tcp",qlen);
 }
 
@@ -135,10 +135,10 @@ int passiveTCP(const char *service, int qlen){
  * @param qlen
  * @return
  */
-int passivesock(const char *service,const char *transport,int qlen) {
+int passivesock(int service,const char *transport,int qlen) {
     printf("\n---\nPassiveSock");
-    u_short portbase = 0;
-    struct servent *pse;        //Pointer to service information entry;
+    //u_short portbase = 0;
+    //struct servent *pse;        //Pointer to service information entry;
     struct protoent *ppe;        //pointer to protocol information entry
     struct sockaddr_in sin;     //an internet endpoint address
     int s, type;                //socket Descriptor and socket type
@@ -146,15 +146,15 @@ int passivesock(const char *service,const char *transport,int qlen) {
     memset(&sin, '\0', sizeof(sin));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
-
-
+    sin.sin_port = htons(service);
+    printf("\nTransport: \n");
     /* Map service name to port number */
-    if ((pse = getservbyname(service, transport))) {
+    /*if ((pse = getservbyname((const char *)service, transport))) {
         sin.sin_port = htons(ntohs((u_short) pse->s_port) + portbase);
     }
     else if ((sin.sin_port = htons((u_short) atoi(service))) == 0) {
         perror("Cant get service entry");
-    }
+    }*/
 
     /* Map protocol name to protocol number */
     if ((ppe = getprotobyname(transport)) == 0) {
@@ -198,7 +198,7 @@ int main() {
     printf("\nStarted");
     int	sock, ssock, fd, client_len, childProcCount, numOfClients;
     struct sockaddr_in server, client[MAX_PLAYERS];
-    char *service;
+    int service;
 
     printf("\n---\nZeroing");
     memset(&server,'\0', sizeof(server));
@@ -214,11 +214,11 @@ int main() {
     for(int i = 0; i < MAX_PLAYERS; i++) {
         memset(&client[i],'\0', sizeof(client[i]));
     }
-    service = HANGMAN_TCP_FORK_PORT;
+    service = (HANGMAN_TCP_FORK_PORT);
 
-    perror("\n---\nCreating Socket\n\n");
+    printf("Creating Socket \n");
     sock = passiveTCP(service,5);
-    perror("\n---\nCreated Socket\n\n");
+    perror("\n---\nCreated Socket");
     signal(SIGCHLD, reaper);
 
 
@@ -227,7 +227,8 @@ int main() {
         exit(1);
     }
 
-    while (1) {
+    for (int i =0;i < MAX_PLAYERS; i++) {
+
         client_len = sizeof(client[0]);
         printf("\n---\nAccepting?\n\n");
         ssock = accept(sock,(struct sockaddr *)&server,(socklen_t *)&client_len);
@@ -244,8 +245,8 @@ int main() {
 
         switch(fork()){
             case 0: //Child
-                printf("\n---\nForked new Child Process");
-                close(sock);
+                printf("\n---\nForked new Child Process\nParent: %d\nCreated Child Process\n New Child: %d",getppid(),getpid());
+                close(sock);//Child Doesnt Need Listener Port
                 test(ssock);
                 break;
             default:
@@ -255,6 +256,6 @@ int main() {
         }
         //test(ssock);
         // Run Hangman
-        (void) close(ssock);
+        close(ssock);
     }
 }

@@ -14,4 +14,4 @@ if [ -e bin/hangclientFork ]; then
 fi
 
 # Compile the binary, with WARNINGS replaced with ERRORS
-gcc src/hangclient_fork.c -o bin/hangclientFork -std=gnu99 -Werror
+gcc src/hangclient_tcp_fork.c -o bin/hangclientFork -std=gnu99 -Werror
