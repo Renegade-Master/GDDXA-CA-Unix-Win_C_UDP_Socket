@@ -13,6 +13,8 @@
 #include <stdbool.h>
 #include <time.h>
 
+
+
 char* word[] = {
 #include "../rsc/words"
 };

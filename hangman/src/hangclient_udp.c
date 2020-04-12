@@ -132,6 +132,7 @@ void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char
  * @param serv_len  - The length of the Server Address Structure
  */
 void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
+
     ssize_t count;
     char i_line[MAX_LEN + 1];
     char o_line[MAX_LEN];
@@ -139,6 +140,7 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
     // Zero the data out
     memset(&i_line, '\0', sizeof(i_line));
     memset(&o_line, '\0', sizeof(o_line));
+
 
     fprintf(stdout, "Testing Connection\n");
 
@@ -151,6 +153,7 @@ void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len) {
 
         // Receive a reply from the Server
         count = recvfrom(sock, i_line, MAX_LEN, 0, NULL, NULL);
+
 
         // Check the received data for errors
         if (count < 0) {

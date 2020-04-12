@@ -14,8 +14,6 @@
 #include "datatypes_client.h"
 #include "datatypes_udp.h"
 
-#define GUESS_LEN 2
-
 void play_hangman(int sock, struct sockaddr* serv_addr, socklen_t serv_len, char cli_id[ID_LEN]);
 
 void test_connection(int sock, struct sockaddr* serv_addr, socklen_t serv_len);
