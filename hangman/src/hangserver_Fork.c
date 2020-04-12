@@ -13,9 +13,8 @@
 
 
 /**
- *
- * @param in
- * @param out
+ * A Function Designed to create a thread that does
+ * not become a Zombie for testing purposes
  */
 void testGameNoZombie(){
 
@@ -25,10 +24,10 @@ void testGameNoZombie(){
     }
     exit(0);
 }
+
 /**
- *
- * @param in
- * @param out
+ *  A Function Designed to create a thread that does
+ *  become a Zombie for testing purposes
  */
 void testGameZombie(){
 
@@ -38,10 +37,10 @@ void testGameZombie(){
 }
 
 /**
- *
- * @param sock
- * @param cli_adr
- * @param cli_len
+ *  The m,ain hangman game
+ * @param sock      - What Socket the hangman game service will be run through
+ * @param cli_adr   - The client playing Hangman
+ * @param cli_len   - The Length of the Client address
  */
 void play_hangman(int sock,struct sockaddr* cli_adr,socklen_t cli_len) {
     fprintf(stdout, "\n--Playing Hangman--");
@@ -69,10 +68,6 @@ void play_hangman(int sock,struct sockaddr* cli_adr,socklen_t cli_len) {
 
         count = sendto(sock,i_line,count,0,cli_adr,cli_len);
 
-
-
-
-
     }while(!endGame);
 }
 int test(int sock){
@@ -95,8 +90,8 @@ int test(int sock){
 
 
 /**
- * Find and Terminate Zombie Child Process'
- * @param siq
+ * The Signal Function designed to search for
+ * and Terminate Zombie Processses in the main program
  */
 void reaper(){
 
@@ -118,9 +113,10 @@ void reaper(){
 }
 
 /**
- * Passively Assign Socket Connection in TCP
- * @param service
- * @param qlen
+ * Call a sokcket build structure based on the protocol provided
+ * Currently only calls TCP
+ * @param service   - The Socket/Service to be used
+ * @param qlen      - The number of Clients in queue to be connected
  * @return
  */
 int passiveTCP(int service, int qlen){
@@ -130,9 +126,9 @@ int passiveTCP(int service, int qlen){
 
 /**
  * Allocate & bind server socket
- * @param service
- * @param transport
- * @param qlen
+ * @param service       - The Socket/Service to be used
+ * @param transport     - The Transport Protocol being used by this socket
+ * @param qlen          - The number of Clients in queue to be connected
  * @return
  */
 int passivesock(int service,const char *transport,int qlen) {
@@ -191,7 +187,10 @@ int passivesock(int service,const char *transport,int qlen) {
 
 
 /**
- *
+ *  Main function of hangserver_tcp_fork(), Builds and deploys server
+ *  from variables set in Header files using TCp transport protocol for the socket
+ *  Fork() each incoming connection to run on a seperate thread when received
+ *  Deploys Signal Function reaper() to check for Orphaned Processes
  * @return
  */
 int main() {
@@ -245,7 +244,8 @@ int main() {
 
         switch(fork()){
             case 0: //Child
-                printf("\n---\nForked new Child Process\nParent: %d\nCreated Child Process\n New Child: %d",getppid(),getpid());
+                printf("\n---\nForked new Child Process\nParent: %d\n"
+                       "Created Child Process\n New Child: %d",getppid(),getpid());
                 close(sock);//Child Doesnt Need Listener Port
                 test(ssock);
                 break;
@@ -254,8 +254,7 @@ int main() {
                 close(ssock);
                 break;
         }
-        //test(ssock);
-        // Run Hangman
+
         close(ssock);
     }
 }

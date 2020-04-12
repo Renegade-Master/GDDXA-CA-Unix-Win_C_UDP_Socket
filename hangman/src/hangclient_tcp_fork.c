@@ -1,14 +1,19 @@
-//
-// Created by Rory Ryan on 09/04/2020.
-//
+/**
+ * Author:  Rory Ryan [K00218864]
+ * Date:    2020/03/09
+ *
+ * This is the Source file for the Client side of the TCP version of the
+ * Networked Hangman game.
+ *
+ */
 
 #include "../hdr/hangclient_tcp_fork.h"
 
 
 /**
  * Main Client program for online Hangman game served on forking server
- * @param argc
- * @param argv
+ * @param argc  - Number of arguments provided to the terminal
+ * @param argv  - Arguments provided
  * @return
  */
 int main(int argc, char* argv[]) {
@@ -58,8 +63,8 @@ int main(int argc, char* argv[]) {
 
 /**
  * Constructs & assigns a socket for a TCP Client
- * @param server
- * @param service
+ * @param server    - The server IP address the socket will connect to
+ * @param service   - The Socket this client program will communicate through
  * @return
  */
 int PassiveTCPClient(const char *server,const char *service){
