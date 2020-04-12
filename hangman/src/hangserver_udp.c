@@ -341,6 +341,7 @@ int main(int argc, char* argv[]) {
         exit(1); // Error Condition 01
     }
 
+    // Build the Server Address manually
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(HANGMAN_UDP_PORT);
@@ -355,7 +356,6 @@ int main(int argc, char* argv[]) {
     // Test connections (DEBUG FUNCTION)
     //test_connection(udp_sock, (struct sockaddr*) &cli_addr, sizeof(cli_addr));
 
-    // Handle connections
     // Accept Clients until all game slots are full
     connected_clients = 0;
     for (int i = 0; i < max_players; i++) {
@@ -365,4 +365,8 @@ int main(int argc, char* argv[]) {
     }
 
     play_hangman(udp_sock, cli_addrs, sizeof(struct sockaddr), &connected_clients);
+
+    // Close the Socket, and exit the program
+    close(udp_sock);
+    return (0);
 }
